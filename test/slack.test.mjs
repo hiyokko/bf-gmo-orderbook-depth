@@ -50,7 +50,7 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
   assert.match(text, /mid（best askとbest bidの中間値）/);
-  assert.match(text, /MID 10,000,000\.0/);
+  assert.match(text, /\n────────\nMID 10,000,000\.0\n────────\n/);
   assert.match(text, /数量 \| +到達価格 \| 到達影響\(%\)/);
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
   assert.match(text, /[\d,.]+ \| +\d+\.\d{4}%/);
