@@ -25,6 +25,7 @@ watchdogの手動実行はデフォルトでdry-runです。Actions画面で `Ch
 ## Slackに表示する内容
 
 - mid: best askとbest bidの中間値
+- SP: best askからbest bidを引いたスプレッド
 - 価格: 指定数量を満たす最後の板価格
 - 到達影響: midから価格までの不利方向への距離（%）
 

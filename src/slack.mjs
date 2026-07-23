@@ -84,7 +84,9 @@ function formatExchangeBlock(snapshot) {
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
     formatBestRow(snapshot.bestAsk, snapshot.mid),
     MID_SEPARATOR,
-    `MID ${formatPrice(snapshot.mid, 1)}`,
+    `MID ${formatPrice(snapshot.mid, 1)}（SP ${formatPrice(
+      snapshot.bestAsk - snapshot.bestBid,
+    )}）`,
     MID_SEPARATOR,
     formatBestRow(snapshot.bestBid, snapshot.mid),
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
