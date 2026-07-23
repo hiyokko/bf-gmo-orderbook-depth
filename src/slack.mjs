@@ -4,12 +4,12 @@ import {
 } from "./config.mjs";
 
 const COLUMN_WIDTHS = Object.freeze({
-  quantity: 4,
+  quantity: 6,
   limit: 12,
   impact: 12,
 });
 const SLACK_WIDE_CHARACTER_WIDTH = 1.5;
-const TABLE_HEADER = formatTableColumns("数量", "価格", "impact");
+const TABLE_HEADER = formatTableColumns("amount", "price", "impact");
 const MID_SEPARATOR = "────────────────";
 
 export function validateWebhookUrl(value) {
@@ -40,7 +40,7 @@ export function createSlackText(snapshots, fetchedAtJst) {
   return [
     "*レバBTC 板Depthスナップショット*",
     `取得時刻: ${fetchedAtJst} JST`,
-    "impact = midから価格までの距離",
+    "impact = midからpriceまでの距離",
     "",
     blocks.join("\n\n"),
   ].join("\n");

@@ -45,13 +45,13 @@ test("Slack text uses the requested display order and one blank line between exc
   const gmoStart = text.indexOf("*GMOコイン レバレッジ*");
   const bitFlyer = text.slice(bitFlyerStart, gmoStart);
   const askRows = [3, 1, 0.5, 0.3, 0.1].map((target) =>
-    bitFlyer.indexOf(`\n${String(target).padStart(4)} |`));
+    bitFlyer.indexOf(`\n${String(target).padStart(6)} |`));
   const midStart = bitFlyer.indexOf("MID ");
   const bidRows = [0.1, 0.3, 0.5, 1, 3].map((target) =>
-    bitFlyer.indexOf(`\n${String(target).padStart(4)} |`, midStart));
-  const bestAskStart = bitFlyer.indexOf("\nbest |");
-  const bestBidStart = bitFlyer.indexOf("\nbest |", midStart);
-  const bidHeaderStart = bitFlyer.indexOf("数量", midStart);
+    bitFlyer.indexOf(`\n${String(target).padStart(6)} |`, midStart));
+  const bestAskStart = bitFlyer.indexOf("\n  best |");
+  const bestBidStart = bitFlyer.indexOf("\n  best |", midStart);
+  const bidHeaderStart = bitFlyer.indexOf("amount", midStart);
   const bidLabelStart = bitFlyer.indexOf("BID / SELL", midStart);
 
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
@@ -67,7 +67,7 @@ test("Slack text uses the requested display order and one blank line between exc
     text,
     /\*GMOコイン レバレッジ\* `BTC_JPY`\nAPI応答時刻 2026-07-23T11:52:11\.975Z\n```/,
   );
-  assert.match(text, /impact = midから価格までの距離/);
+  assert.match(text, /impact = midからpriceまでの距離/);
   assert.doesNotMatch(text, /手数料・スプレッド外コストは除外/);
   assert.match(
     text,
@@ -75,35 +75,36 @@ test("Slack text uses the requested display order and one blank line between exc
   );
   assert.match(
     bitFlyer,
-    /ASK \/ BUY\n 数量 \| +価格 \| +impact/,
+    /ASK \/ BUY\namount \| +price \| +impact/,
   );
   assert.match(
     bitFlyer,
-    / 数量 \| +価格 \| +impact\nBID \/ SELL/,
+    /amount \| +price \| +impact\nBID \/ SELL/,
   );
   assert.equal(
-    [...text.matchAll(/ 数量 \| +価格 \| +impact/g)].length,
+    [...text.matchAll(/amount \| +price \| +impact/g)].length,
     4,
   );
+  assert.doesNotMatch(text, /数量|価格/);
   assert.doesNotMatch(text, /price impact/);
   const tableLines = bitFlyer
     .split("\n")
     .filter((line) => line.includes("|"));
   assert.deepEqual(
     [...new Set(tableLines.map(slackPipePositions))],
-    ["5,20"],
+    ["7,22"],
   );
-  assert.match(text, /\n   3 \|   10,000,300 \|      0\.0600%\n/);
-  assert.match(text, /\n 0\.1 \|   10,000,010 \|      0\.0020%\n/);
+  assert.match(text, /\n     3 \|   10,000,300 \|      0\.0600%\n/);
+  assert.match(text, /\n   0\.1 \|   10,000,010 \|      0\.0020%\n/);
   assert.match(
     bitFlyer,
-    /\nbest \|   10,001,000 \|      0\.0100%\n────────────────\nMID/,
+    /\n  best \|   10,001,000 \|      0\.0100%\n────────────────\nMID/,
   );
   assert.match(
     bitFlyer,
-    /MID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\nbest \|    9,999,000 \|      0\.0100%\n/,
+    /MID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\n  best \|    9,999,000 \|      0\.0100%\n/,
   );
-  assert.equal([...text.matchAll(/\nbest \|/g)].length, 4);
+  assert.equal([...text.matchAll(/\n  best \|/g)].length, 4);
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
   assert.match(text, /[\d,.]+ \| +\d+\.\d{4}%/);
 });

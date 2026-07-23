@@ -16,8 +16,8 @@ These instructions apply to the repository root and all descendants.
 - Calculate and display best ask/bid impact as the percentage distance from MID.
 - Calculate impact from `mid = (bestAsk + bestBid) / 2`.
 - Display arrival-price impact as a percentage.
-- Use `impact = midから価格までの距離` as the Slack methodology caption.
-- Label the arrival-price impact column `impact`.
+- Use `impact = midからpriceまでの距離` as the Slack methodology caption.
+- Label the table columns `amount`, `price`, and `impact`.
 - Display the mid price, `SP = bestAsk - bestBid`, and the percentage
   `SP / MID * 100` on one line between horizontal separator lines, formatted
   as `MID ...（SP ...／...%）`.

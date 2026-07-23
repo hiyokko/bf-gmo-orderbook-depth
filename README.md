@@ -26,8 +26,8 @@ watchdogの手動実行はデフォルトでdry-runです。Actions画面で `Ch
 
 - mid: best askとbest bidの中間値
 - SP: best askからbest bidを引いたスプレッドと、mid比のスプレッド率
-- 価格: 指定数量を満たす最後の板価格
-- 到達影響: midから価格までの不利方向への距離（%）
+- price: 指定数量を満たす最後の板価格
+- impact: midからpriceまでの不利方向への距離（%）
 
 通常の板表示に合わせ、ask側（成行BUY）を `3 → 1 → 0.5 → 0.3 → 0.1 → best ask`、MIDを挟んでbid側（成行SELL）を `best bid → 0.1 → 0.3 → 0.5 → 1 → 3` の順に表示します。best行のimpactもmidからの距離です。bitFlyerとGMOコインの表示ブロック間には空行を1行入れます。
 
