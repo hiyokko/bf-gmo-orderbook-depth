@@ -28,6 +28,9 @@ function snapshot(name, symbol) {
     name,
     symbol,
     sourceTime: null,
+    bestAsk: 10_001_000,
+    bestBid: 9_999_000,
+    mid: 10_000_000,
     buy: ascending,
     sell: ascending,
   };
@@ -51,6 +54,8 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
+  assert.match(text, /mid（best askとbest bidの中間値）/);
+  assert.match(text, /MID 10,000,000\.0/);
   assert.match(
     text,
     /到達価格 \| +到達影響\(bp \/ %\) \| +VWAP \| +VWAP影響\(bp \/ %\)/,

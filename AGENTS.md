@@ -12,6 +12,7 @@ These instructions apply to the repository root and all descendants.
 - Calculate SELL depth by consuming bids in descending price order.
 - Keep target quantities at 0.1, 0.3, 0.5, 1, and 3 BTC unless the user requests a change.
 - Display ask/BUY rows as 3, 1, 0.5, 0.3, 0.1 BTC toward best, followed by bid/SELL rows as 0.1, 0.3, 0.5, 1, 3 BTC away from best.
+- Calculate impact from `mid = (bestAsk + bestBid) / 2`.
 - Display arrival-price and VWAP impacts separately in both basis points and percent, using `impactPercent = impactBps / 100`.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
 - Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.

@@ -31,7 +31,8 @@ export function createSlackText(snapshots, fetchedAtJst) {
   return [
     "*レバBTC 板Depthスナップショット*",
     `取得時刻: ${fetchedAtJst} JST`,
-    "価格影響 = 最良気配に対する到達価格・VWAPの悪化幅（手数料・スプレッド外コストは除外）",
+    "価格影響 = mid（best askとbest bidの中間値）からの到達価格・VWAPの距離",
+    "手数料・スプレッド外コストは除外",
     "",
     blocks.join("\n\n"),
   ].join("\n");
@@ -72,7 +73,7 @@ function formatExchangeBlock(snapshot) {
     "数量 |     到達価格 |    到達影響(bp / %) |           VWAP |    VWAP影響(bp / %)",
     "ASK / BUY",
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
-    "──────── BEST ────────",
+    `──────── MID ${formatPrice(snapshot.mid, 1)} ────────`,
     "BID / SELL",
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
     "```",

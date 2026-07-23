@@ -25,13 +25,14 @@ test("BUY depth calculates arrival-price and VWAP impacts consistently", () => {
   const depth = calculateDepth([
     { price: 101, size: 0.2 },
     { price: 100, size: 0.1 },
-  ], 0.3, "BUY");
+  ], 0.3, "BUY", 99.5);
 
   assert.equal(depth.insufficient, false);
   assert.equal(depth.best, 100);
+  assert.equal(depth.referencePrice, 99.5);
   assert.equal(depth.limit, 101);
   assert.ok(Math.abs(depth.vwap - (100 * 0.1 + 101 * 0.2) / 0.3) < 1e-12);
-  assert.ok(Math.abs(depth.limitImpactBps - 100) < 1e-12);
+  assert.ok(Math.abs(depth.limitImpactBps - ((101 / 99.5) - 1) * 10_000) < 1e-12);
   assert.ok(Math.abs(depth.limitImpactPercent - depth.limitImpactBps / 100) < 1e-12);
   assert.ok(depth.vwapImpactBps > 0);
   assert.ok(depth.vwapImpactBps < depth.limitImpactBps);
@@ -42,11 +43,12 @@ test("SELL depth sorts bids descending and reports both unfavorable impacts", ()
   const depth = calculateDepth([
     { price: 99, size: 0.2 },
     { price: 100, size: 0.1 },
-  ], 0.3, "SELL");
+  ], 0.3, "SELL", 100.5);
 
   assert.equal(depth.best, 100);
+  assert.equal(depth.referencePrice, 100.5);
   assert.equal(depth.limit, 99);
-  assert.ok(Math.abs(depth.limitImpactBps - 100) < 1e-12);
+  assert.ok(Math.abs(depth.limitImpactBps - (1 - (99 / 100.5)) * 10_000) < 1e-12);
   assert.ok(Math.abs(depth.limitImpactPercent - depth.limitImpactBps / 100) < 1e-12);
   assert.ok(depth.vwapImpactBps > 0);
   assert.ok(depth.vwapImpactBps < depth.limitImpactBps);
@@ -59,11 +61,15 @@ test("depth calculation filters invalid levels and reports insufficient liquidit
     { price: 0, size: 5 },
     { price: 101, size: -1 },
     { price: "invalid", size: 3 },
-  ], [0.1, 0.3], "BUY");
+  ], [0.1, 0.3], "BUY", 99.5);
 
   assert.equal(small.insufficient, false);
   assert.equal(large.insufficient, true);
   assert.ok(Math.abs(large.available - 0.1) < 1e-12);
+  assert.throws(
+    () => calculateDepth([{ price: 100, size: 1 }], 0.1, "BUY"),
+    /Invalid impact reference price/,
+  );
 });
 
 test("exchange response parsers normalize bitFlyer and GMO payloads", () => {
@@ -105,6 +111,11 @@ test("fetchExchangeSnapshot keeps exchange metadata and calculates both sides", 
   });
 
   assert.equal(snapshot.name, "Test Exchange");
+  assert.equal(snapshot.bestAsk, 101);
+  assert.equal(snapshot.bestBid, 100);
+  assert.equal(snapshot.mid, 100.5);
   assert.equal(snapshot.buy[0].limit, 101);
   assert.equal(snapshot.sell[0].limit, 100);
+  assert.ok(snapshot.buy[0].limitImpactBps > 0);
+  assert.ok(snapshot.sell[0].limitImpactBps > 0);
 });

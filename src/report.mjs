@@ -30,9 +30,10 @@ export function createReport({ snapshots, fetchedAt, slack }) {
     methodology: {
       buy: "asksを価格昇順に累積",
       sell: "bidsを価格降順に累積",
-      limitImpactBps: "最良気配に対する到達価格の不利方向への乖離",
+      mid: "(bestAsk + bestBid) / 2",
+      limitImpactBps: "midから到達価格までの不利方向への距離",
       limitImpactPercent: "limitImpactBps / 100",
-      vwapImpactBps: "最良気配に対するVWAPの不利方向への乖離",
+      vwapImpactBps: "midからVWAPまでの不利方向への距離",
       vwapImpactPercent: "vwapImpactBps / 100",
       excludes: ["取引手数料", "資金調達料", "API取得後の板変動"],
     },

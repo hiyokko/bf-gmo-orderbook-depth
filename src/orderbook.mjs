@@ -45,13 +45,19 @@ export function parseGmoOrderBook(body) {
   };
 }
 
-export function calculateDepth(levels, target, direction) {
-  return consumeSortedLevels(normalizeLevels(levels, direction), target, direction);
+export function calculateDepth(levels, target, direction, referencePrice) {
+  return consumeSortedLevels(
+    normalizeLevels(levels, direction),
+    target,
+    direction,
+    requireReferencePrice(referencePrice),
+  );
 }
 
-export function calculateDepths(levels, targets, direction) {
+export function calculateDepths(levels, targets, direction, referencePrice) {
   const normalized = normalizeLevels(levels, direction);
-  return targets.map((target) => consumeSortedLevels(normalized, target, direction));
+  const reference = requireReferencePrice(referencePrice);
+  return calculateNormalizedDepths(normalized, targets, direction, reference);
 }
 
 export async function fetchSnapshots({
@@ -87,14 +93,29 @@ export async function fetchExchangeSnapshot(exchange, {
   }
 
   const parsed = exchange.parse(await response.json());
+  const asks = normalizeLevels(parsed.asks, "BUY");
+  const bids = normalizeLevels(parsed.bids, "SELL");
+  const bestAsk = asks[0].price;
+  const bestBid = bids[0].price;
+  const mid = (bestAsk + bestBid) / 2;
+
   return {
     name: exchange.name,
     symbol: exchange.symbol,
     apiUrl: exchange.url,
     sourceTime: parsed.sourceTime,
-    buy: calculateDepths(parsed.asks, targets, "BUY"),
-    sell: calculateDepths(parsed.bids, targets, "SELL"),
+    bestAsk,
+    bestBid,
+    mid,
+    buy: calculateNormalizedDepths(asks, targets, "BUY", mid),
+    sell: calculateNormalizedDepths(bids, targets, "SELL", mid),
   };
+}
+
+function calculateNormalizedDepths(levels, targets, direction, referencePrice) {
+  return targets.map((target) => (
+    consumeSortedLevels(levels, target, direction, referencePrice)
+  ));
 }
 
 function normalizeLevels(levels, direction) {
@@ -128,7 +149,7 @@ function normalizeLevels(levels, direction) {
   return normalized;
 }
 
-function consumeSortedLevels(levels, target, direction) {
+function consumeSortedLevels(levels, target, direction, referencePrice) {
   if (!Number.isFinite(target) || target <= 0) {
     throw new Error(`Invalid target quantity: ${target}`);
   }
@@ -157,12 +178,13 @@ function consumeSortedLevels(levels, target, direction) {
   }
 
   const vwap = notional / target;
-  const limitImpactBps = calculateAdverseImpactBps(limit, best, direction);
-  const vwapImpactBps = calculateAdverseImpactBps(vwap, best, direction);
+  const limitImpactBps = calculateAdverseImpactBps(limit, referencePrice, direction);
+  const vwapImpactBps = calculateAdverseImpactBps(vwap, referencePrice, direction);
 
   return {
     target,
     best,
+    referencePrice,
     limit,
     vwap,
     limitImpactBps,
@@ -175,10 +197,18 @@ function consumeSortedLevels(levels, target, direction) {
   };
 }
 
-function calculateAdverseImpactBps(price, best, direction) {
+function calculateAdverseImpactBps(price, referencePrice, direction) {
   return direction === "BUY"
-    ? ((price / best) - 1) * 10_000
-    : (1 - (price / best)) * 10_000;
+    ? ((price / referencePrice) - 1) * 10_000
+    : (1 - (price / referencePrice)) * 10_000;
+}
+
+function requireReferencePrice(value) {
+  const referencePrice = Number(value);
+  if (!Number.isFinite(referencePrice) || referencePrice <= 0) {
+    throw new Error(`Invalid impact reference price: ${value}`);
+  }
+  return referencePrice;
 }
 
 function validateExchange(exchange) {
