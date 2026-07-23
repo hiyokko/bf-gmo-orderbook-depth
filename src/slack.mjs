@@ -6,7 +6,7 @@ import {
 const COLUMN_WIDTHS = Object.freeze({
   quantity: 6,
   limit: 12,
-  impact: 12,
+  impact: 9,
 });
 const SLACK_WIDE_CHARACTER_WIDTH = 1.5;
 const TABLE_HEADER = formatTableColumns("amount", "price", "impact");

@@ -75,14 +75,14 @@ test("Slack text uses the requested display order and one blank line between exc
   );
   assert.match(
     bitFlyer,
-    /ASK \/ BUY\namount \| +price \| +impact/,
+    /ASK \/ BUY\namount \| {8}price \| {4}impact/,
   );
   assert.match(
     bitFlyer,
-    /amount \| +price \| +impact\nBID \/ SELL/,
+    /amount \| {8}price \| {4}impact\nBID \/ SELL/,
   );
   assert.equal(
-    [...text.matchAll(/amount \| +price \| +impact/g)].length,
+    [...text.matchAll(/amount \| {8}price \| {4}impact/g)].length,
     4,
   );
   assert.doesNotMatch(text, /数量|価格/);
@@ -94,15 +94,15 @@ test("Slack text uses the requested display order and one blank line between exc
     [...new Set(tableLines.map(slackPipePositions))],
     ["7,22"],
   );
-  assert.match(text, /\n     3 \|   10,000,300 \|      0\.0600%\n/);
-  assert.match(text, /\n   0\.1 \|   10,000,010 \|      0\.0020%\n/);
+  assert.match(text, /\n     3 \|   10,000,300 \| {3}0\.0600%\n/);
+  assert.match(text, /\n   0\.1 \|   10,000,010 \| {3}0\.0020%\n/);
   assert.match(
     bitFlyer,
-    /\n  best \|   10,001,000 \|      0\.0100%\n────────────────\nMID/,
+    /\n  best \|   10,001,000 \| {3}0\.0100%\n────────────────\nMID/,
   );
   assert.match(
     bitFlyer,
-    /MID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\n  best \|    9,999,000 \|      0\.0100%\n/,
+    /MID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\n  best \|    9,999,000 \| {3}0\.0100%\n/,
   );
   assert.equal([...text.matchAll(/\n  best \|/g)].length, 4);
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
