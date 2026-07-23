@@ -1,0 +1,14 @@
+{
+  "name": "bf-gmo-orderbook-depth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node orderbook_depth_slack.mjs",
+    "test": "node --test",
+    "dry-run": "node orderbook_depth_slack.mjs --dry-run"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

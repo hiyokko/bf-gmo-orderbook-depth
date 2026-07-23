@@ -1,0 +1,28 @@
+# AGENTS.md
+
+## Scope
+
+These instructions apply to the repository root and all descendants.
+
+## Project rules
+
+- Keep the repository safe for public visibility.
+- Use `FX_BTC_JPY` for bitFlyer Crypto CFD and `BTC_JPY` for GMO Coin leveraged BTC.
+- Calculate BUY depth by consuming asks in ascending price order.
+- Calculate SELL depth by consuming bids in descending price order.
+- Keep target quantities at 0.1, 0.3, 0.5, 1, and 3 BTC unless the user requests a change.
+- Display ask/BUY rows as 3, 1, 0.5, 0.3, 0.1 BTC toward best, followed by bid/SELL rows as 0.1, 0.3, 0.5, 1, 3 BTC away from best.
+- Display price impact in both basis points and percent, using `impactPercent = impactBps / 100`.
+- Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
+- Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.
+- Run `npm test` and `npm run dry-run` after code or workflow changes.
+
+## Public-repository security
+
+- Store the Slack Incoming Webhook URL only in the GitHub Actions repository secret named `SLACK_WEBHOOK_URL`.
+- For local execution, `.env` may contain `SLACK_WEBHOOK_URL`, but it must remain Git-ignored with owner-only permissions.
+- Never print, commit, upload, document, or place the Webhook URL in workflow inputs.
+- Never trigger a secret-bearing workflow from pull requests or untrusted code.
+- Give `GITHUB_TOKEN` read-only contents permission.
+- Pin every referenced GitHub Action to a full-length commit SHA.
+- Pass the Slack secret only to the single step that posts to Slack.
