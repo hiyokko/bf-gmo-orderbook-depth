@@ -45,10 +45,10 @@ test("Slack text uses the requested display order and one blank line between exc
   const gmoStart = text.indexOf("*GMOコイン レバレッジ*");
   const bitFlyer = text.slice(bitFlyerStart, gmoStart);
   const askRows = [3, 1, 0.5, 0.3, 0.1].map((target) =>
-    bitFlyer.indexOf(`\n${String(target).padStart(3)} |`));
+    bitFlyer.indexOf(`\n${String(target).padStart(4)} |`));
   const bidStart = bitFlyer.indexOf("BID / SELL");
   const bidRows = [0.1, 0.3, 0.5, 1, 3].map((target) =>
-    bitFlyer.indexOf(`\n${String(target).padStart(3)} |`, bidStart));
+    bitFlyer.indexOf(`\n${String(target).padStart(4)} |`, bidStart));
 
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
@@ -71,6 +71,8 @@ test("Slack text uses the requested display order and one blank line between exc
     [...text.matchAll(/数量 \| +到達価格 \| price impact/g)].length,
     4,
   );
+  assert.match(text, /\n   3 \|   10,000,300 \|      0\.0600%\n/);
+  assert.match(text, /\n 0\.1 \|   10,000,010 \|      0\.0020%\n/);
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
   assert.match(text, /[\d,.]+ \| +\d+\.\d{4}%/);
 });

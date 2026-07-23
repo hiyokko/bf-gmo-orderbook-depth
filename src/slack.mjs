@@ -3,7 +3,12 @@ import {
   RUNTIME_DEFAULTS,
 } from "./config.mjs";
 
-const TABLE_HEADER = "数量 |     到達価格 | price impact";
+const COLUMN_WIDTHS = Object.freeze({
+  quantity: 4,
+  limit: 12,
+  impact: 12,
+});
+const TABLE_HEADER = formatTableColumns("数量", "到達価格", "price impact");
 
 export function validateWebhookUrl(value) {
   if (typeof value !== "string") return false;
@@ -98,17 +103,41 @@ function orderedRows(results, targetOrder) {
 }
 
 function formatSlackRow(result) {
-  const quantity = String(result.target).padStart(3);
+  const quantity = padDisplayStart(result.target, COLUMN_WIDTHS.quantity);
   if (result.insufficient) {
     return `${quantity} | 板不足（取得範囲 ${result.available.toFixed(4)} BTC）`;
   }
-  return [
-    quantity,
-    formatPrice(result.limit).padStart(12),
-    formatImpactPercent(result.limitImpactPercent).padStart(11),
-  ].join(" | ");
+  return formatTableColumns(
+    result.target,
+    formatPrice(result.limit),
+    formatImpactPercent(result.limitImpactPercent),
+  );
 }
 
 function formatImpactPercent(percent) {
   return `${percent.toFixed(4)}%`;
+}
+
+function formatTableColumns(quantity, limit, impact) {
+  return [
+    padDisplayStart(quantity, COLUMN_WIDTHS.quantity),
+    padDisplayStart(limit, COLUMN_WIDTHS.limit),
+    padDisplayStart(impact, COLUMN_WIDTHS.impact),
+  ].join(" | ");
+}
+
+function padDisplayStart(value, targetWidth) {
+  const text = String(value);
+  return `${" ".repeat(Math.max(0, targetWidth - displayWidth(text)))}${text}`;
+}
+
+function displayWidth(value) {
+  return [...String(value)].reduce((width, character) => (
+    width + (isWideCharacter(character) ? 2 : 1)
+  ), 0);
+}
+
+function isWideCharacter(character) {
+  return /[\u3000-\u30ff\u3400-\u9fff\uf900-\ufaff\uff01-\uff60\uffe0-\uffe6]/u
+    .test(character);
 }
