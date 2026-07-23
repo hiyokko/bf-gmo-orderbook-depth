@@ -15,6 +15,7 @@ These instructions apply to the repository root and all descendants.
 - Calculate impact from `mid = (bestAsk + bestBid) / 2`.
 - Display arrival-price impact as a percentage.
 - Display the mid price on its own line between horizontal separator lines.
+- Repeat the table header directly below both the ASK/BUY and BID/SELL labels.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
 - Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.
 - Keep the watchdog recovery window at 20–360 minutes after the latest scheduled slot, and do not treat ordinary manual runs as slot completion.

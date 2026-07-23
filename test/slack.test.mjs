@@ -51,7 +51,18 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
   assert.match(text, /mid（best askとbest bidの中間値）/);
   assert.match(text, /\n────────\nMID 10,000,000\.0\n────────\n/);
-  assert.match(text, /数量 \| +到達価格 \| 到達影響\(%\)/);
+  assert.match(
+    bitFlyer,
+    /ASK \/ BUY\n数量 \| +到達価格 \| 到達影響\(%\)/,
+  );
+  assert.match(
+    bitFlyer,
+    /BID \/ SELL\n数量 \| +到達価格 \| 到達影響\(%\)/,
+  );
+  assert.equal(
+    [...text.matchAll(/数量 \| +到達価格 \| 到達影響\(%\)/g)].length,
+    4,
+  );
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
   assert.match(text, /[\d,.]+ \| +\d+\.\d{4}%/);
 });

@@ -3,6 +3,8 @@ import {
   RUNTIME_DEFAULTS,
 } from "./config.mjs";
 
+const TABLE_HEADER = "数量 |     到達価格 | 到達影響(%)";
+
 export function validateWebhookUrl(value) {
   if (typeof value !== "string") return false;
   try {
@@ -70,13 +72,14 @@ function formatExchangeBlock(snapshot) {
   return [
     `*${snapshot.name}* \`${snapshot.symbol}\`${sourceTime}`,
     "```",
-    "数量 |     到達価格 | 到達影響(%)",
     "ASK / BUY",
+    TABLE_HEADER,
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
     "────────",
     `MID ${formatPrice(snapshot.mid, 1)}`,
     "────────",
     "BID / SELL",
+    TABLE_HEADER,
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
     "```",
   ].join("\n");
