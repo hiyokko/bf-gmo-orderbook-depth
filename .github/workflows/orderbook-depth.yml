@@ -1,5 +1,7 @@
 name: Orderbook depth
 
+run-name: ${{ inputs.watchdog_target != '' && format('Orderbook depth watchdog {0}', inputs.watchdog_target) || 'Orderbook depth' }}
+
 on:
   schedule:
     - cron: "0 1,9,17 * * *"
@@ -11,8 +13,14 @@ on:
         required: true
         default: false
         type: boolean
+      watchdog_target:
+        description: Internal watchdog target; leave empty for manual runs
+        required: false
+        default: ""
+        type: string
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -38,12 +46,20 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Check whether the target slot is already complete
+        id: slot
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_TOKEN: ${{ github.token }}
+          WATCHDOG_TARGET: ${{ inputs.watchdog_target }}
+        run: node scripts/check-orderbook-slot.mjs
+
       - name: Fetch and calculate without posting
         if: ${{ github.event_name == 'workflow_dispatch' && !inputs.post_to_slack }}
         run: npm run dry-run
 
       - name: Fetch, calculate, and post to Slack
-        if: ${{ github.event_name == 'schedule' || inputs.post_to_slack }}
+        if: ${{ (github.event_name == 'schedule' || inputs.post_to_slack) && steps.slot.outputs.should_post == 'true' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |

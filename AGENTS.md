@@ -15,6 +15,7 @@ These instructions apply to the repository root and all descendants.
 - Display price impact in both basis points and percent, using `impactPercent = impactBps / 100`.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
 - Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.
+- Keep the watchdog recovery window at 20–360 minutes after the latest scheduled slot, and do not treat ordinary manual runs as slot completion.
 - Run `npm test` and `npm run dry-run` after code or workflow changes.
 
 ## Public-repository security
@@ -24,5 +25,7 @@ These instructions apply to the repository root and all descendants.
 - Never print, commit, upload, document, or place the Webhook URL in workflow inputs.
 - Never trigger a secret-bearing workflow from pull requests or untrusted code.
 - Give `GITHUB_TOKEN` read-only contents permission.
+- Limit `actions: write` to the watchdog workflow that dispatches the primary workflow.
 - Pin every referenced GitHub Action to a full-length commit SHA.
 - Pass the Slack secret only to the single step that posts to Slack.
+- Never pass the Slack secret to the watchdog workflow.

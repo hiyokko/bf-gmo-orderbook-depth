@@ -14,6 +14,14 @@ GitHub Actionsが次の時刻に自動実行します。
 
 ワークフローではIANAタイムゾーン `Asia/Tokyo` を指定し、毎日8時間間隔で実行します。GitHub Actionsの混雑状況により、実際の開始が数分以上遅れることがあります。
 
+### Watchdog
+
+`.github/workflows/orderbook-depth-watchdog.yml` が毎時 `07 / 17 / 27 / 37 / 47 / 57` 分に直近の定時枠を確認します。定時から20分以上経過しても、その枠の正常完了または実行中の記録がなければ、元の `orderbook-depth.yml` をバックアップ実行します。6時間を超えた古い枠は追いかけません。
+
+正常完了の判定にはGitHub Actionsの実行履歴を利用するため、外部DBや追加Secretは不要です。元ワークフローとバックアップは同じ同時実行グループで直列化され、投稿直前にも同じ枠の成功記録を確認するため、遅延した定時実行との二重投稿を防ぎます。
+
+watchdogの手動実行はデフォルトでdry-runです。Actions画面で `Check only; do not dispatch...` をオフにした場合だけ、未完了枠を実際にバックアップ実行します。
+
 ## Slackに表示する内容
 
 - 到達価格: 指定数量を満たす最後の板価格
@@ -76,11 +84,13 @@ npm test
 
 ## セキュリティ設計
 
-- ワークフロー権限は `contents: read` のみ
+- 通常ワークフローは `actions: read` と `contents: read` のみ
+- watchdogだけが元ワークフローを再起動するための `actions: write` を持つ
 - 使用するGitHub公式ActionはフルコミットSHAで固定
 - checkout後にGitHub認証情報を残さない
 - npm依存パッケージなし
 - SecretはSlack投稿ステップだけへ渡す
+- watchdogにはSlack Webhook Secretを渡さない
 - PR・pushではワークフローを起動しない
 - 実行時間を10分で制限
 - 同時実行を1件に制限

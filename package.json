@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node orderbook_depth_slack.mjs",
     "test": "node --test",
-    "dry-run": "node orderbook_depth_slack.mjs --dry-run"
+    "dry-run": "node orderbook_depth_slack.mjs --dry-run",
+    "watchdog": "node scripts/run-watchdog.mjs"
   },
   "engines": {
     "node": ">=24"
