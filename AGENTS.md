@@ -17,7 +17,8 @@ These instructions apply to the repository root and all descendants.
 - Use `price impact = midから価格までの距離` as the Slack methodology caption.
 - Label the arrival-price impact column `price impact`.
 - Display the mid price on its own line between horizontal separator lines.
-- Repeat the table header directly below both the ASK/BUY and BID/SELL labels.
+- Place the table header directly below ASK/BUY, and place the repeated table
+  header and BID/SELL label below the SELL rows so the layout mirrors around MID.
 - Display an exchange API response timestamp on the line below its name and symbol.
 - Align Slack table columns by rendered display width, treating Japanese characters as double-width.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.

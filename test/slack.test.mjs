@@ -46,12 +46,16 @@ test("Slack text uses the requested display order and one blank line between exc
   const bitFlyer = text.slice(bitFlyerStart, gmoStart);
   const askRows = [3, 1, 0.5, 0.3, 0.1].map((target) =>
     bitFlyer.indexOf(`\n${String(target).padStart(4)} |`));
-  const bidStart = bitFlyer.indexOf("BID / SELL");
+  const midStart = bitFlyer.indexOf("MID ");
   const bidRows = [0.1, 0.3, 0.5, 1, 3].map((target) =>
-    bitFlyer.indexOf(`\n${String(target).padStart(4)} |`, bidStart));
+    bitFlyer.indexOf(`\n${String(target).padStart(4)} |`, midStart));
+  const bidHeaderStart = bitFlyer.indexOf("数量", midStart);
+  const bidLabelStart = bitFlyer.indexOf("BID / SELL", midStart);
 
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
+  assert.ok(bidRows.at(-1) < bidHeaderStart);
+  assert.ok(bidHeaderStart < bidLabelStart);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
   assert.match(
     text,
@@ -68,7 +72,7 @@ test("Slack text uses the requested display order and one blank line between exc
   );
   assert.match(
     bitFlyer,
-    /BID \/ SELL\n数量 \| +価格 \| price impact/,
+    /数量 \| +価格 \| price impact\nBID \/ SELL/,
   );
   assert.equal(
     [...text.matchAll(/数量 \| +価格 \| price impact/g)].length,

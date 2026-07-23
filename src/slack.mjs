@@ -85,9 +85,9 @@ function formatExchangeBlock(snapshot) {
     MID_SEPARATOR,
     `MID ${formatPrice(snapshot.mid, 1)}`,
     MID_SEPARATOR,
-    "BID / SELL",
-    TABLE_HEADER,
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
+    TABLE_HEADER,
+    "BID / SELL",
     "```",
   ].join("\n");
 }
