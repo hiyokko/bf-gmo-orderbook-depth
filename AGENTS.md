@@ -24,7 +24,8 @@ These instructions apply to the repository root and all descendants.
 - Place the table header directly below ASK/BUY, and place the repeated table
   header and BID/SELL label below the SELL rows so the layout mirrors around MID.
 - Display an exchange API response timestamp on the line below its name and symbol.
-- Align Slack table columns by rendered display width, treating Japanese characters as double-width.
+- Align Slack table columns to Slack's rendered code-block font, treating
+  Japanese characters as 1.5 ASCII character widths.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
 - Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.
 - Keep the watchdog recovery window at 20–360 minutes after the latest scheduled slot, and do not treat ordinary manual runs as slot completion.

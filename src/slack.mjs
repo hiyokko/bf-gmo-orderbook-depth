@@ -8,6 +8,7 @@ const COLUMN_WIDTHS = Object.freeze({
   limit: 12,
   impact: 12,
 });
+const SLACK_WIDE_CHARACTER_WIDTH = 1.5;
 const TABLE_HEADER = formatTableColumns("数量", "価格", "price impact");
 const MID_SEPARATOR = "────────────────";
 
@@ -147,12 +148,16 @@ function formatTableColumns(quantity, limit, impact) {
 
 function padDisplayStart(value, targetWidth) {
   const text = String(value);
-  return `${" ".repeat(Math.max(0, targetWidth - displayWidth(text)))}${text}`;
+  const paddingWidth = Math.max(
+    0,
+    Math.round(targetWidth - displayWidth(text)),
+  );
+  return `${" ".repeat(paddingWidth)}${text}`;
 }
 
 function displayWidth(value) {
   return [...String(value)].reduce((width, character) => (
-    width + (isWideCharacter(character) ? 2 : 1)
+    width + (isWideCharacter(character) ? SLACK_WIDE_CHARACTER_WIDTH : 1)
   ), 0);
 }
 

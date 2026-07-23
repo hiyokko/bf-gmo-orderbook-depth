@@ -74,15 +74,22 @@ test("Slack text uses the requested display order and one blank line between exc
   );
   assert.match(
     bitFlyer,
-    /ASK \/ BUY\n数量 \| +価格 \| price impact/,
+    /ASK \/ BUY\n 数量 \| +価格 \| price impact/,
   );
   assert.match(
     bitFlyer,
-    /数量 \| +価格 \| price impact\nBID \/ SELL/,
+    / 数量 \| +価格 \| price impact\nBID \/ SELL/,
   );
   assert.equal(
-    [...text.matchAll(/数量 \| +価格 \| price impact/g)].length,
+    [...text.matchAll(/ 数量 \| +価格 \| price impact/g)].length,
     4,
+  );
+  const tableLines = bitFlyer
+    .split("\n")
+    .filter((line) => line.includes("|"));
+  assert.deepEqual(
+    [...new Set(tableLines.map(slackPipePositions))],
+    ["5,20"],
   );
   assert.match(text, /\n   3 \|   10,000,300 \|      0\.0600%\n/);
   assert.match(text, /\n 0\.1 \|   10,000,010 \|      0\.0020%\n/);
@@ -98,6 +105,29 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
   assert.match(text, /[\d,.]+ \| +\d+\.\d{4}%/);
 });
+
+function slackPipePositions(line) {
+  let prefix = "";
+  const positions = [];
+  for (const character of line) {
+    if (character === "|") {
+      positions.push(slackDisplayWidth(prefix));
+    }
+    prefix += character;
+  }
+  return positions.join(",");
+}
+
+function slackDisplayWidth(value) {
+  return [...String(value)].reduce((width, character) => (
+    width + (
+      /[\u3000-\u30ff\u3400-\u9fff\uf900-\ufaff\uff01-\uff60\uffe0-\uffe6]/u
+        .test(character)
+        ? 1.5
+        : 1
+    )
+  ), 0);
+}
 
 test("Slack formatting rejects snapshots missing a configured target", () => {
   const incomplete = snapshot("Test", "BTC_JPY");
