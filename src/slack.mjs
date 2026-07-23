@@ -70,7 +70,7 @@ function formatExchangeBlock(snapshot) {
   return [
     `*${snapshot.name}* \`${snapshot.symbol}\`${sourceTime}`,
     "```",
-    "数量 |     到達価格 |    到達影響(bp / %) |           VWAP |    VWAP影響(bp / %)",
+    "数量 |     到達価格 | 到達影響(%) |           VWAP | VWAP影響(%)",
     "ASK / BUY",
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
     `──────── MID ${formatPrice(snapshot.mid, 1)} ────────`,
@@ -99,12 +99,12 @@ function formatSlackRow(result) {
   return [
     quantity,
     formatPrice(result.limit).padStart(12),
-    formatImpact(result.limitImpactBps, result.limitImpactPercent).padStart(20),
+    formatImpactPercent(result.limitImpactPercent).padStart(11),
     formatPrice(result.vwap, 1).padStart(14),
-    formatImpact(result.vwapImpactBps, result.vwapImpactPercent).padStart(20),
+    formatImpactPercent(result.vwapImpactPercent).padStart(11),
   ].join(" | ");
 }
 
-function formatImpact(bps, percent) {
-  return `${bps.toFixed(2)}bp / ${percent.toFixed(4)}%`;
+function formatImpactPercent(percent) {
+  return `${percent.toFixed(4)}%`;
 }

@@ -32,11 +32,11 @@ test("BUY depth calculates arrival-price and VWAP impacts consistently", () => {
   assert.equal(depth.referencePrice, 99.5);
   assert.equal(depth.limit, 101);
   assert.ok(Math.abs(depth.vwap - (100 * 0.1 + 101 * 0.2) / 0.3) < 1e-12);
-  assert.ok(Math.abs(depth.limitImpactBps - ((101 / 99.5) - 1) * 10_000) < 1e-12);
-  assert.ok(Math.abs(depth.limitImpactPercent - depth.limitImpactBps / 100) < 1e-12);
-  assert.ok(depth.vwapImpactBps > 0);
-  assert.ok(depth.vwapImpactBps < depth.limitImpactBps);
-  assert.ok(Math.abs(depth.vwapImpactPercent - depth.vwapImpactBps / 100) < 1e-12);
+  assert.ok(
+    Math.abs(depth.limitImpactPercent - ((101 / 99.5) - 1) * 100) < 1e-12,
+  );
+  assert.ok(depth.vwapImpactPercent > 0);
+  assert.ok(depth.vwapImpactPercent < depth.limitImpactPercent);
 });
 
 test("SELL depth sorts bids descending and reports both unfavorable impacts", () => {
@@ -48,11 +48,11 @@ test("SELL depth sorts bids descending and reports both unfavorable impacts", ()
   assert.equal(depth.best, 100);
   assert.equal(depth.referencePrice, 100.5);
   assert.equal(depth.limit, 99);
-  assert.ok(Math.abs(depth.limitImpactBps - (1 - (99 / 100.5)) * 10_000) < 1e-12);
-  assert.ok(Math.abs(depth.limitImpactPercent - depth.limitImpactBps / 100) < 1e-12);
-  assert.ok(depth.vwapImpactBps > 0);
-  assert.ok(depth.vwapImpactBps < depth.limitImpactBps);
-  assert.ok(Math.abs(depth.vwapImpactPercent - depth.vwapImpactBps / 100) < 1e-12);
+  assert.ok(
+    Math.abs(depth.limitImpactPercent - (1 - (99 / 100.5)) * 100) < 1e-12,
+  );
+  assert.ok(depth.vwapImpactPercent > 0);
+  assert.ok(depth.vwapImpactPercent < depth.limitImpactPercent);
 });
 
 test("depth calculation filters invalid levels and reports insufficient liquidity", () => {
@@ -116,6 +116,6 @@ test("fetchExchangeSnapshot keeps exchange metadata and calculates both sides", 
   assert.equal(snapshot.mid, 100.5);
   assert.equal(snapshot.buy[0].limit, 101);
   assert.equal(snapshot.sell[0].limit, 100);
-  assert.ok(snapshot.buy[0].limitImpactBps > 0);
-  assert.ok(snapshot.sell[0].limitImpactBps > 0);
+  assert.ok(snapshot.buy[0].limitImpactPercent > 0);
+  assert.ok(snapshot.sell[0].limitImpactPercent > 0);
 });

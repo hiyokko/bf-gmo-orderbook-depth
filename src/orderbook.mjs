@@ -178,8 +178,16 @@ function consumeSortedLevels(levels, target, direction, referencePrice) {
   }
 
   const vwap = notional / target;
-  const limitImpactBps = calculateAdverseImpactBps(limit, referencePrice, direction);
-  const vwapImpactBps = calculateAdverseImpactBps(vwap, referencePrice, direction);
+  const limitImpactPercent = calculateAdverseImpactPercent(
+    limit,
+    referencePrice,
+    direction,
+  );
+  const vwapImpactPercent = calculateAdverseImpactPercent(
+    vwap,
+    referencePrice,
+    direction,
+  );
 
   return {
     target,
@@ -187,20 +195,18 @@ function consumeSortedLevels(levels, target, direction, referencePrice) {
     referencePrice,
     limit,
     vwap,
-    limitImpactBps,
-    limitImpactPercent: limitImpactBps / 100,
-    vwapImpactBps,
-    vwapImpactPercent: vwapImpactBps / 100,
+    limitImpactPercent,
+    vwapImpactPercent,
     notional,
     levelsUsed,
     insufficient: false,
   };
 }
 
-function calculateAdverseImpactBps(price, referencePrice, direction) {
+function calculateAdverseImpactPercent(price, referencePrice, direction) {
   return direction === "BUY"
-    ? ((price / referencePrice) - 1) * 10_000
-    : (1 - (price / referencePrice)) * 10_000;
+    ? ((price / referencePrice) - 1) * 100
+    : (1 - (price / referencePrice)) * 100;
 }
 
 function requireReferencePrice(value) {

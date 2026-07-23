@@ -12,9 +12,7 @@ function result(target) {
     best: 10_000_000,
     limit: 10_000_000 + target * 100,
     vwap: 10_000_000 + target * 50,
-    limitImpactBps: target * 2,
     limitImpactPercent: target * 2 / 100,
-    vwapImpactBps: target,
     vwapImpactPercent: target / 100,
     notional: target * 10_000_000,
     levelsUsed: 1,
@@ -58,12 +56,12 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.match(text, /MID 10,000,000\.0/);
   assert.match(
     text,
-    /到達価格 \| +到達影響\(bp \/ %\) \| +VWAP \| +VWAP影響\(bp \/ %\)/,
+    /到達価格 \| 到達影響\(%\) \| +VWAP \| VWAP影響\(%\)/,
   );
-  assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（/);
+  assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b/);
   assert.match(
     text,
-    /\d+\.\d{2}bp \/ \d+\.\d{4}% \| +[\d,.]+ \| +\d+\.\d{2}bp \/ \d+\.\d{4}%/,
+    /\d+\.\d{4}% \| +[\d,.]+ \| +\d+\.\d{4}%/,
   );
 });
 
