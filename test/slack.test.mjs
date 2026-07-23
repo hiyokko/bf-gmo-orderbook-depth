@@ -57,21 +57,21 @@ test("Slack text uses the requested display order and one blank line between exc
     text,
     /\*GMOコイン レバレッジ\* `BTC_JPY`\nAPI応答時刻 2026-07-23T11:52:11\.975Z\n```/,
   );
-  assert.match(text, /price impact = midから到達価格までの距離/);
+  assert.match(text, /price impact = midから価格までの距離/);
   assert.match(
     text,
     /\n────────────────\nMID 10,000,000\.0\n────────────────\n/,
   );
   assert.match(
     bitFlyer,
-    /ASK \/ BUY\n数量 \| +到達価格 \| price impact/,
+    /ASK \/ BUY\n数量 \| +価格 \| price impact/,
   );
   assert.match(
     bitFlyer,
-    /BID \/ SELL\n数量 \| +到達価格 \| price impact/,
+    /BID \/ SELL\n数量 \| +価格 \| price impact/,
   );
   assert.equal(
-    [...text.matchAll(/数量 \| +到達価格 \| price impact/g)].length,
+    [...text.matchAll(/数量 \| +価格 \| price impact/g)].length,
     4,
   );
   assert.match(text, /\n   3 \|   10,000,300 \|      0\.0600%\n/);
