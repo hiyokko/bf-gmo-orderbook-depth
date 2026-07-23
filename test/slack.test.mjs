@@ -61,14 +61,14 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.match(text, /\n────────\nMID 10,000,000\.0\n────────\n/);
   assert.match(
     bitFlyer,
-    /ASK \/ BUY\n数量 \| +到達価格 \| 到達影響\(%\)/,
+    /ASK \/ BUY\n数量 \| +到達価格 \| price impact/,
   );
   assert.match(
     bitFlyer,
-    /BID \/ SELL\n数量 \| +到達価格 \| 到達影響\(%\)/,
+    /BID \/ SELL\n数量 \| +到達価格 \| price impact/,
   );
   assert.equal(
-    [...text.matchAll(/数量 \| +到達価格 \| 到達影響\(%\)/g)].length,
+    [...text.matchAll(/数量 \| +到達価格 \| price impact/g)].length,
     4,
   );
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);

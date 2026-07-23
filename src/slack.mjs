@@ -3,7 +3,7 @@ import {
   RUNTIME_DEFAULTS,
 } from "./config.mjs";
 
-const TABLE_HEADER = "数量 |     到達価格 | 到達影響(%)";
+const TABLE_HEADER = "数量 |     到達価格 | price impact";
 
 export function validateWebhookUrl(value) {
   if (typeof value !== "string") return false;
