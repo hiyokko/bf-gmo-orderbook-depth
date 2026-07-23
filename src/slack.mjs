@@ -9,6 +9,7 @@ const COLUMN_WIDTHS = Object.freeze({
   impact: 12,
 });
 const TABLE_HEADER = formatTableColumns("数量", "到達価格", "price impact");
+const MID_SEPARATOR = "────────────────";
 
 export function validateWebhookUrl(value) {
   if (typeof value !== "string") return false;
@@ -81,9 +82,9 @@ function formatExchangeBlock(snapshot) {
     "ASK / BUY",
     TABLE_HEADER,
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
-    "────────",
+    MID_SEPARATOR,
     `MID ${formatPrice(snapshot.mid, 1)}`,
-    "────────",
+    MID_SEPARATOR,
     "BID / SELL",
     TABLE_HEADER,
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
