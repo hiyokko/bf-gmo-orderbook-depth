@@ -32,7 +32,6 @@ export function createReport({ snapshots, fetchedAt, slack }) {
       sell: "bidsを価格降順に累積",
       mid: "(bestAsk + bestBid) / 2",
       limitImpactPercent: "midから到達価格までの不利方向への距離（%）",
-      vwapImpactPercent: "midからVWAPまでの不利方向への距離（%）",
       excludes: ["取引手数料", "資金調達料", "API取得後の板変動"],
     },
     slack,

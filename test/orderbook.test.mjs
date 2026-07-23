@@ -21,7 +21,7 @@ test("configuration keeps the required exchanges, symbols, and target quantities
   );
 });
 
-test("BUY depth calculates arrival-price and VWAP impacts consistently", () => {
+test("BUY depth calculates arrival-price impact from mid", () => {
   const depth = calculateDepth([
     { price: 101, size: 0.2 },
     { price: 100, size: 0.1 },
@@ -31,15 +31,14 @@ test("BUY depth calculates arrival-price and VWAP impacts consistently", () => {
   assert.equal(depth.best, 100);
   assert.equal(depth.referencePrice, 99.5);
   assert.equal(depth.limit, 101);
-  assert.ok(Math.abs(depth.vwap - (100 * 0.1 + 101 * 0.2) / 0.3) < 1e-12);
   assert.ok(
     Math.abs(depth.limitImpactPercent - ((101 / 99.5) - 1) * 100) < 1e-12,
   );
-  assert.ok(depth.vwapImpactPercent > 0);
-  assert.ok(depth.vwapImpactPercent < depth.limitImpactPercent);
+  assert.equal("vwap" in depth, false);
+  assert.equal("vwapImpactPercent" in depth, false);
 });
 
-test("SELL depth sorts bids descending and reports both unfavorable impacts", () => {
+test("SELL depth sorts bids descending and calculates arrival-price impact from mid", () => {
   const depth = calculateDepth([
     { price: 99, size: 0.2 },
     { price: 100, size: 0.1 },
@@ -51,8 +50,8 @@ test("SELL depth sorts bids descending and reports both unfavorable impacts", ()
   assert.ok(
     Math.abs(depth.limitImpactPercent - (1 - (99 / 100.5)) * 100) < 1e-12,
   );
-  assert.ok(depth.vwapImpactPercent > 0);
-  assert.ok(depth.vwapImpactPercent < depth.limitImpactPercent);
+  assert.equal("vwap" in depth, false);
+  assert.equal("vwapImpactPercent" in depth, false);
 });
 
 test("depth calculation filters invalid levels and reports insufficient liquidity", () => {

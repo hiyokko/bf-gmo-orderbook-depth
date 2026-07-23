@@ -156,14 +156,12 @@ function consumeSortedLevels(levels, target, direction, referencePrice) {
 
   const best = levels[0].price;
   let remaining = target;
-  let notional = 0;
   let limit = null;
   let levelsUsed = 0;
 
   for (const level of levels) {
     if (remaining <= 1e-12) break;
     const fill = Math.min(remaining, level.size);
-    notional += fill * level.price;
     remaining -= fill;
     limit = level.price;
     levelsUsed += 1;
@@ -177,14 +175,8 @@ function consumeSortedLevels(levels, target, direction, referencePrice) {
     };
   }
 
-  const vwap = notional / target;
   const limitImpactPercent = calculateAdverseImpactPercent(
     limit,
-    referencePrice,
-    direction,
-  );
-  const vwapImpactPercent = calculateAdverseImpactPercent(
-    vwap,
     referencePrice,
     direction,
   );
@@ -194,10 +186,7 @@ function consumeSortedLevels(levels, target, direction, referencePrice) {
     best,
     referencePrice,
     limit,
-    vwap,
     limitImpactPercent,
-    vwapImpactPercent,
-    notional,
     levelsUsed,
     insufficient: false,
   };
