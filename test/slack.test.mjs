@@ -17,12 +17,12 @@ function result(target) {
   };
 }
 
-function snapshot(name, symbol) {
+function snapshot(name, symbol, sourceTime = null) {
   const ascending = [0.1, 0.3, 0.5, 1, 3].map(result);
   return {
     name,
     symbol,
-    sourceTime: null,
+    sourceTime,
     bestAsk: 10_001_000,
     bestBid: 9_999_000,
     mid: 10_000_000,
@@ -34,7 +34,11 @@ function snapshot(name, symbol) {
 test("Slack text uses the requested display order and one blank line between exchanges", () => {
   const text = createSlackText([
     snapshot("bitFlyer Crypto CFD", "FX_BTC_JPY"),
-    snapshot("GMOコイン レバレッジ", "BTC_JPY"),
+    snapshot(
+      "GMOコイン レバレッジ",
+      "BTC_JPY",
+      "2026-07-23T11:52:11.975Z",
+    ),
   ], "2026/07/23 12:00:00");
 
   const bitFlyerStart = text.indexOf("*bitFlyer Crypto CFD*");
@@ -49,6 +53,10 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
+  assert.match(
+    text,
+    /\*GMOコイン レバレッジ\* `BTC_JPY`\nAPI応答時刻 2026-07-23T11:52:11\.975Z\n```/,
+  );
   assert.match(text, /mid（best askとbest bidの中間値）/);
   assert.match(text, /\n────────\nMID 10,000,000\.0\n────────\n/);
   assert.match(

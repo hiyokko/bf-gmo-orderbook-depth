@@ -66,11 +66,12 @@ export async function postToSlack(text, webhookUrl, {
 }
 
 function formatExchangeBlock(snapshot) {
-  const sourceTime = snapshot.sourceTime
-    ? ` / API応答時刻 ${snapshot.sourceTime}`
-    : "";
+  const metadata = [`*${snapshot.name}* \`${snapshot.symbol}\``];
+  if (snapshot.sourceTime) {
+    metadata.push(`API応答時刻 ${snapshot.sourceTime}`);
+  }
   return [
-    `*${snapshot.name}* \`${snapshot.symbol}\`${sourceTime}`,
+    ...metadata,
     "```",
     "ASK / BUY",
     TABLE_HEADER,
