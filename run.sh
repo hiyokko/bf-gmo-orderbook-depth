@@ -16,4 +16,4 @@ if (( node_major < 24 )); then
   exit 1
 fi
 
-exec "$node_binary" "$script_directory/orderbook_depth_slack.mjs" "$@"
+exec "$node_binary" "$script_directory/scripts/run-orderbook-depth.mjs" "$@"

@@ -82,6 +82,22 @@ npm test
 
 最新結果は `output/latest.json` に保存されます。このディレクトリと `.env` はGitから除外されます。
 
+## コード構成
+
+外部I/Oと計算ロジックを分離し、各モジュールを単独でテストできる構成です。
+
+- `src/config.mjs`: 数量、表示順、定時枠などの共有設定
+- `src/orderbook.mjs`: 取引所レスポンス変換、板Depth計算、公開API取得
+- `src/slack.mjs`: Slack表示生成、Webhook検証、投稿
+- `src/application.mjs`: API取得からレポート保存までの実行制御
+- `src/report.mjs`: JST表記とJSONレポート
+- `src/github-actions.mjs`: GitHub Actions APIクライアント
+- `src/watchdog.mjs`: 定時枠、実行履歴分類、復旧判断
+- `scripts/`: 通常実行、重複防止、watchdogの薄いエントリーポイント
+- `test/`: 計算、I/O境界、watchdog、Workflow設定のテスト
+
+板レベルの正規化とソートは、取引所ごと・BUY/SELLごとに1回だけ行い、その結果を各対象数量の計算で再利用します。
+
 ## セキュリティ設計
 
 - 通常ワークフローは `actions: read` と `contents: read` のみ

@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  consume,
   createSlackText,
+  postToSlack,
   validateWebhookUrl,
-} from "../src/orderbook-depth.mjs";
+} from "../src/slack.mjs";
 
 function result(target) {
   return {
@@ -31,19 +31,7 @@ function snapshot(name, symbol) {
   };
 }
 
-test("consume calculates VWAP, bp, and percent consistently", () => {
-  const depth = consume([
-    { price: 100, size: 0.1 },
-    { price: 101, size: 0.2 },
-  ], 0.3, "BUY");
-
-  assert.equal(depth.insufficient, false);
-  assert.equal(depth.limit, 101);
-  assert.ok(Math.abs(depth.vwap - (100 * 0.1 + 101 * 0.2) / 0.3) < 1e-12);
-  assert.ok(Math.abs(depth.impactPercent - depth.impactBps / 100) < 1e-12);
-});
-
-test("Slack text uses order-book display order and one blank line between exchanges", () => {
+test("Slack text uses the requested display order and one blank line between exchanges", () => {
   const text = createSlackText([
     snapshot("bitFlyer Crypto CFD", "FX_BTC_JPY"),
     snapshot("GMOコイン レバレッジ", "BTC_JPY"),
@@ -52,19 +40,25 @@ test("Slack text uses order-book display order and one blank line between exchan
   const bitFlyerStart = text.indexOf("*bitFlyer Crypto CFD*");
   const gmoStart = text.indexOf("*GMOコイン レバレッジ*");
   const bitFlyer = text.slice(bitFlyerStart, gmoStart);
-
   const askRows = [3, 1, 0.5, 0.3, 0.1].map((target) =>
     bitFlyer.indexOf(`\n${String(target).padStart(3)} |`));
   const bidStart = bitFlyer.indexOf("BID / SELL");
   const bidRows = [0.1, 0.3, 0.5, 1, 3].map((target) =>
     bitFlyer.indexOf(`\n${String(target).padStart(3)} |`, bidStart));
 
-  assert.ok(askRows.every((index) => index >= 0));
-  assert.ok(bidRows.every((index) => index >= 0));
-  assert.deepEqual([...askRows].sort((a, b) => a - b), askRows);
-  assert.deepEqual([...bidRows].sort((a, b) => a - b), bidRows);
+  assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
+  assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
   assert.match(text, /\d+\.\d{2}bp \/ \d+\.\d{4}%/);
+});
+
+test("Slack formatting rejects snapshots missing a configured target", () => {
+  const incomplete = snapshot("Test", "BTC_JPY");
+  incomplete.buy = incomplete.buy.slice(1);
+  assert.throws(
+    () => createSlackText([incomplete], "2026/07/23 12:00:00"),
+    /0.1 BTC is missing/,
+  );
 });
 
 test("Webhook validation accepts only Slack Incoming Webhook URLs", () => {
@@ -74,4 +68,26 @@ test("Webhook validation accepts only Slack Incoming Webhook URLs", () => {
   );
   assert.equal(validateWebhookUrl("https://example.com/services/T111/B222/secret"), false);
   assert.equal(validateWebhookUrl("not-a-url"), false);
+});
+
+test("Slack delivery validates the response body", async () => {
+  const calls = [];
+  const response = await postToSlack(
+    "message",
+    "https://hooks.slack.com/services/T111/B222/secret",
+    {
+      fetchImpl: async (url, options) => {
+        calls.push({ url, options });
+        return {
+          ok: true,
+          status: 200,
+          text: async () => "ok",
+        };
+      },
+    },
+  );
+
+  assert.equal(response, "ok");
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(calls[0].options.body), { text: "message" });
 });

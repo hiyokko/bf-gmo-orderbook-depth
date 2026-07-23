@@ -1,8 +1,11 @@
 import {
+  createGitHubActionsClient,
+  publicWorkflowRun,
+} from "../src/github-actions.mjs";
+import {
+  ORDERBOOK_WORKFLOW,
   classifyTargetRuns,
-  dispatchOrderbookWorkflow,
-  fetchWorkflowRuns,
-  publicRun,
+  decideRecovery,
   selectWatchdogTarget,
   workflowDispatchInputs,
 } from "../src/watchdog.mjs";
@@ -24,49 +27,43 @@ if (!target) {
     target,
   }, null, 2));
 } else {
-  const request = {
+  const github = createGitHubActionsClient({
     repository: process.env.GITHUB_REPOSITORY,
     token: process.env.GITHUB_TOKEN,
     apiUrl: process.env.GITHUB_API_URL,
-  };
-  const runs = await fetchWorkflowRuns(request);
+  });
+  const runs = await github.listWorkflowRuns(ORDERBOOK_WORKFLOW);
   const classification = classifyTargetRuns(runs, target);
-  const successful = classification.successful[0];
-  const active = classification.active[0];
+  const decision = decideRecovery(classification, {
+    dryRun: readBooleanEnv("WATCHDOG_DRY_RUN"),
+  });
 
-  if (successful) {
+  if (decision.action === "skip") {
     console.log(JSON.stringify({
       skipped: true,
-      reason: "target_already_completed",
+      reason: decision.reason,
       target,
-      run: publicRun(successful),
+      run: publicWorkflowRun(decision.run),
     }, null, 2));
-  } else if (active) {
-    console.log(JSON.stringify({
-      skipped: true,
-      reason: "target_run_active",
-      target,
-      run: publicRun(active),
-    }, null, 2));
-  } else if (readBooleanEnv("WATCHDOG_DRY_RUN")) {
+  } else if (decision.action === "dry_run") {
     console.log(JSON.stringify({
       dryRun: true,
       wouldDispatch: true,
       target,
       inputs: workflowDispatchInputs(target),
-      unsuccessfulRuns: classification.unsuccessful.map(publicRun),
+      unsuccessfulRuns: classification.unsuccessful.map(publicWorkflowRun),
     }, null, 2));
   } else {
-    const dispatch = await dispatchOrderbookWorkflow(target, {
-      ...request,
+    const dispatch = await github.dispatchWorkflow(ORDERBOOK_WORKFLOW, {
       ref: process.env.GITHUB_REF_NAME || "main",
+      inputs: workflowDispatchInputs(target),
     });
     console.log(JSON.stringify({
       watchdog: true,
       dispatched: true,
       target,
       dispatch,
-      unsuccessfulRuns: classification.unsuccessful.map(publicRun),
+      unsuccessfulRuns: classification.unsuccessful.map(publicWorkflowRun),
     }, null, 2));
   }
 }

@@ -1,10 +1,9 @@
 import { appendFile } from "node:fs/promises";
+import { createGitHubActionsClient, publicWorkflowRun } from "../src/github-actions.mjs";
 import {
+  ORDERBOOK_WORKFLOW,
   classifyTargetRuns,
-  fetchWorkflowRuns,
-  latestScheduleTarget,
-  parseWatchdogTarget,
-  publicRun,
+  resolveRunTarget,
 } from "../src/watchdog.mjs";
 
 const eventName = String(process.env.EVENT_NAME || "");
@@ -22,16 +21,15 @@ if (eventName !== "schedule" && !watchdogTarget) {
     reason: "manual_run",
   }, null, 2));
 } else {
-  const target = watchdogTarget
-    ? parseWatchdogTarget(watchdogTarget)
-    : latestScheduleTarget();
+  const target = resolveRunTarget({ eventName, watchdogTarget });
   if (!target) throw new Error("Could not resolve the current orderbook schedule target");
 
-  const runs = await fetchWorkflowRuns({
+  const github = createGitHubActionsClient({
     repository: process.env.GITHUB_REPOSITORY,
     token: process.env.GITHUB_TOKEN,
     apiUrl: process.env.GITHUB_API_URL,
   });
+  const runs = await github.listWorkflowRuns(ORDERBOOK_WORKFLOW);
   const classification = classifyTargetRuns(runs, target, {
     currentRunId: process.env.GITHUB_RUN_ID,
   });
@@ -44,7 +42,7 @@ if (eventName !== "schedule" && !watchdogTarget) {
     shouldPost,
     reason,
     target,
-    priorSuccess: priorSuccess ? publicRun(priorSuccess) : null,
+    priorSuccess: priorSuccess ? publicWorkflowRun(priorSuccess) : null,
   }, null, 2));
 }
 

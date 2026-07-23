@@ -16,6 +16,8 @@ These instructions apply to the repository root and all descendants.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
 - Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.
 - Keep the watchdog recovery window at 20–360 minutes after the latest scheduled slot, and do not treat ordinary manual runs as slot completion.
+- Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
+- Normalize and sort each exchange side once before calculating all configured target quantities.
 - Run `npm test` and `npm run dry-run` after code or workflow changes.
 
 ## Public-repository security

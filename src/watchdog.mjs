@@ -1,7 +1,11 @@
+import {
+  ORDERBOOK_SCHEDULE,
+  WORKFLOWS,
+} from "./config.mjs";
+
 const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
-const SCHEDULE_HOURS_JST = Object.freeze([1, 9, 17]);
 const ACTIVE_RUN_STATUSES = new Set([
   "queued",
   "in_progress",
@@ -10,18 +14,18 @@ const ACTIVE_RUN_STATUSES = new Set([
   "requested",
 ]);
 
-export const ORDERBOOK_WORKFLOW = "orderbook-depth.yml";
 export const WATCHDOG_TITLE_PREFIX = "Orderbook depth watchdog ";
+export const ORDERBOOK_WORKFLOW = WORKFLOWS.orderbook;
 
 export function latestScheduleTarget(now = Date.now()) {
-  const nowMs = Number(now);
-  if (!Number.isFinite(nowMs)) return null;
+  const nowMs = finiteTimestamp(now);
+  if (nowMs === null) return null;
 
   const jstDayStart = Math.floor((nowMs + JST_OFFSET_MS) / DAY_MS) * DAY_MS - JST_OFFSET_MS;
   const candidates = [];
 
   for (const dayOffset of [1, 0]) {
-    for (const hour of SCHEDULE_HOURS_JST) {
+    for (const hour of ORDERBOOK_SCHEDULE.hoursJst) {
       const boundaryMs = jstDayStart - dayOffset * DAY_MS + hour * HOUR_MS;
       if (boundaryMs <= nowMs) candidates.push(createTarget(boundaryMs));
     }
@@ -31,17 +35,20 @@ export function latestScheduleTarget(now = Date.now()) {
 }
 
 export function selectWatchdogTarget(now = Date.now(), {
-  minLagMinutes = 20,
-  maxLagMinutes = 360,
+  minLagMinutes = ORDERBOOK_SCHEDULE.watchdogMinLagMinutes,
+  maxLagMinutes = ORDERBOOK_SCHEDULE.watchdogMaxLagMinutes,
 } = {}) {
-  const nowMs = Number(now);
-  if (!Number.isFinite(nowMs)) return null;
+  const nowMs = finiteTimestamp(now);
+  if (nowMs === null) return null;
 
   const target = latestScheduleTarget(nowMs);
   if (!target) return null;
 
-  const minLagMs = Math.max(0, Number(minLagMinutes) || 0) * 60 * 1000;
-  const maxLagMs = Math.max(minLagMs, (Number(maxLagMinutes) || 0) * 60 * 1000);
+  const minLagMs = positiveMinutes(minLagMinutes, 0) * 60 * 1000;
+  const maxLagMs = Math.max(
+    minLagMs,
+    positiveMinutes(maxLagMinutes, ORDERBOOK_SCHEDULE.watchdogMaxLagMinutes) * 60 * 1000,
+  );
   const lagMs = nowMs - target.boundaryMs;
   const result = {
     ...target,
@@ -60,7 +67,7 @@ export function parseWatchdogTarget(value) {
   }
 
   const jstDate = new Date(boundaryMs + JST_OFFSET_MS);
-  const valid = SCHEDULE_HOURS_JST.includes(jstDate.getUTCHours())
+  const valid = ORDERBOOK_SCHEDULE.hoursJst.includes(jstDate.getUTCHours())
     && jstDate.getUTCMinutes() === 0
     && jstDate.getUTCSeconds() === 0
     && jstDate.getUTCMilliseconds() === 0;
@@ -69,6 +76,16 @@ export function parseWatchdogTarget(value) {
   }
 
   return createTarget(boundaryMs);
+}
+
+export function resolveRunTarget({
+  eventName,
+  watchdogTarget,
+  now = Date.now(),
+} = {}) {
+  if (watchdogTarget) return parseWatchdogTarget(watchdogTarget);
+  if (eventName === "schedule") return latestScheduleTarget(now);
+  return null;
 }
 
 export function watchdogRunTitle(target) {
@@ -102,73 +119,26 @@ export function classifyTargetRuns(runs = [], target, {
   };
 }
 
-export async function fetchWorkflowRuns({
-  repository,
-  token,
-  fetchImpl = globalThis.fetch,
-  apiUrl = "https://api.github.com",
+export function decideRecovery(classification, {
+  dryRun = false,
 } = {}) {
-  validateGitHubRequest({ repository, token, fetchImpl });
-  const response = await fetchImpl(
-    `${apiUrl}/repos/${repository}/actions/workflows/${encodeURIComponent(ORDERBOOK_WORKFLOW)}/runs?per_page=100`,
-    {
-      headers: githubHeaders(token),
-      signal: AbortSignal.timeout(15_000),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(await githubError(response, "Failed to list orderbook workflow runs"));
+  if (classification.successful[0]) {
+    return {
+      action: "skip",
+      reason: "target_already_completed",
+      run: classification.successful[0],
+    };
   }
-  const body = await response.json();
-  return Array.isArray(body.workflow_runs) ? body.workflow_runs : [];
-}
-
-export async function dispatchOrderbookWorkflow(target, {
-  repository,
-  ref = "main",
-  token,
-  fetchImpl = globalThis.fetch,
-  apiUrl = "https://api.github.com",
-} = {}) {
-  validateGitHubRequest({ repository, token, fetchImpl });
-  const response = await fetchImpl(
-    `${apiUrl}/repos/${repository}/actions/workflows/${encodeURIComponent(ORDERBOOK_WORKFLOW)}/dispatches`,
-    {
-      method: "POST",
-      headers: {
-        ...githubHeaders(token),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ref,
-        inputs: workflowDispatchInputs(target),
-      }),
-      signal: AbortSignal.timeout(15_000),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error(await githubError(response, `Failed to dispatch ${ORDERBOOK_WORKFLOW}`));
+  if (classification.active[0]) {
+    return {
+      action: "skip",
+      reason: "target_run_active",
+      run: classification.active[0],
+    };
   }
-
   return {
-    repository,
-    ref,
-    workflow: ORDERBOOK_WORKFLOW,
-    inputs: workflowDispatchInputs(target),
-  };
-}
-
-export function publicRun(run = {}) {
-  return {
-    id: run.id,
-    status: run.status,
-    conclusion: run.conclusion,
-    event: run.event,
-    title: run.display_title,
-    createdAt: run.created_at,
-    url: run.html_url,
+    action: dryRun ? "dry_run" : "dispatch",
+    reason: "target_not_completed",
   };
 }
 
@@ -176,7 +146,7 @@ function createTarget(boundaryMs) {
   return {
     label: formatJstBoundary(boundaryMs),
     boundaryMs,
-    nextBoundaryMs: boundaryMs + 8 * HOUR_MS,
+    nextBoundaryMs: boundaryMs + ORDERBOOK_SCHEDULE.intervalHours * HOUR_MS,
     executionBoundaryAt: new Date(boundaryMs).toISOString(),
   };
 }
@@ -209,34 +179,12 @@ function runTimestamp(run) {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
-function validateGitHubRequest({ repository, token, fetchImpl }) {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(String(repository || ""))) {
-    throw new Error("GITHUB_REPOSITORY is missing or invalid");
-  }
-  if (!String(token || "").trim()) {
-    throw new Error("GITHUB_TOKEN is missing");
-  }
-  if (typeof fetchImpl !== "function") {
-    throw new Error("Fetch API is unavailable");
-  }
+function finiteTimestamp(value) {
+  const timestamp = Number(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
 }
 
-function githubHeaders(token) {
-  return {
-    Authorization: `Bearer ${String(token).trim()}`,
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "bf-gmo-orderbook-depth-watchdog",
-  };
-}
-
-async function githubError(response, prefix) {
-  let detail = "";
-  try {
-    const body = await response.json();
-    if (body?.message) detail = `: ${body.message}`;
-  } catch {
-    detail = "";
-  }
-  return `${prefix} (HTTP ${response.status})${detail}`;
+function positiveMinutes(value, fallback) {
+  const minutes = Number(value);
+  return Number.isFinite(minutes) && minutes >= 0 ? minutes : fallback;
 }

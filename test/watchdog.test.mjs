@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   classifyTargetRuns,
+  decideRecovery,
   parseWatchdogTarget,
+  resolveRunTarget,
   selectWatchdogTarget,
   watchdogRunTitle,
   workflowDispatchInputs,
@@ -99,6 +101,54 @@ test("current run is excluded from duplicate-completion checks", () => {
   ], target, { currentRunId: "55" });
 
   assert.deepEqual(result.active, []);
+});
+
+test("slot target resolution distinguishes manual, scheduled, and watchdog runs", () => {
+  assert.equal(resolveRunTarget({ eventName: "workflow_dispatch" }), null);
+  assert.equal(
+    resolveRunTarget({
+      eventName: "workflow_dispatch",
+      watchdogTarget: "2026-07-23T08:00:00.000Z",
+    }).label,
+    "2026-07-23 17:00 JST",
+  );
+  assert.equal(
+    resolveRunTarget({
+      eventName: "schedule",
+      now: new Date("2026-07-23T08:05:00.000Z").getTime(),
+    }).label,
+    "2026-07-23 17:00 JST",
+  );
+});
+
+test("recovery decision prioritizes success, then active runs, then dispatch", () => {
+  const success = { id: 1 };
+  const active = { id: 2 };
+
+  assert.deepEqual(decideRecovery({
+    successful: [success],
+    active: [active],
+    unsuccessful: [],
+  }), {
+    action: "skip",
+    reason: "target_already_completed",
+    run: success,
+  });
+  assert.equal(decideRecovery({
+    successful: [],
+    active: [active],
+    unsuccessful: [],
+  }).reason, "target_run_active");
+  assert.equal(decideRecovery({
+    successful: [],
+    active: [],
+    unsuccessful: [],
+  }, { dryRun: true }).action, "dry_run");
+  assert.equal(decideRecovery({
+    successful: [],
+    active: [],
+    unsuccessful: [],
+  }).action, "dispatch");
 });
 
 test("watchdog dispatch enables Slack and carries a non-secret slot marker", () => {
