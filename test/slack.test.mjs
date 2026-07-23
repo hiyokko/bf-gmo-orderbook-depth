@@ -67,23 +67,24 @@ test("Slack text uses the requested display order and one blank line between exc
     text,
     /\*GMOコイン レバレッジ\* `BTC_JPY`\nAPI応答時刻 2026-07-23T11:52:11\.975Z\n```/,
   );
-  assert.match(text, /price impact = midから価格までの距離/);
+  assert.match(text, /impact = midから価格までの距離/);
   assert.match(
     text,
     /\n────────────────\nMID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\n/,
   );
   assert.match(
     bitFlyer,
-    /ASK \/ BUY\n 数量 \| +価格 \| price impact/,
+    /ASK \/ BUY\n 数量 \| +価格 \| +impact/,
   );
   assert.match(
     bitFlyer,
-    / 数量 \| +価格 \| price impact\nBID \/ SELL/,
+    / 数量 \| +価格 \| +impact\nBID \/ SELL/,
   );
   assert.equal(
-    [...text.matchAll(/ 数量 \| +価格 \| price impact/g)].length,
+    [...text.matchAll(/ 数量 \| +価格 \| +impact/g)].length,
     4,
   );
+  assert.doesNotMatch(text, /price impact/);
   const tableLines = bitFlyer
     .split("\n")
     .filter((line) => line.includes("|"));

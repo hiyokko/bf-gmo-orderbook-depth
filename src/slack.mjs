@@ -9,7 +9,7 @@ const COLUMN_WIDTHS = Object.freeze({
   impact: 12,
 });
 const SLACK_WIDE_CHARACTER_WIDTH = 1.5;
-const TABLE_HEADER = formatTableColumns("数量", "価格", "price impact");
+const TABLE_HEADER = formatTableColumns("数量", "価格", "impact");
 const MID_SEPARATOR = "────────────────";
 
 export function validateWebhookUrl(value) {
@@ -40,7 +40,7 @@ export function createSlackText(snapshots, fetchedAtJst) {
   return [
     "*レバBTC 板Depthスナップショット*",
     `取得時刻: ${fetchedAtJst} JST`,
-    "price impact = midから価格までの距離",
+    "impact = midから価格までの距離",
     "手数料・スプレッド外コストは除外",
     "",
     blocks.join("\n\n"),
