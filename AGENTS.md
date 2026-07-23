@@ -11,7 +11,9 @@ These instructions apply to the repository root and all descendants.
 - Calculate BUY depth by consuming asks in ascending price order.
 - Calculate SELL depth by consuming bids in descending price order.
 - Keep target quantities at 0.1, 0.3, 0.5, 1, and 3 BTC unless the user requests a change.
-- Display ask/BUY rows as 3, 1, 0.5, 0.3, 0.1 BTC toward best, followed by bid/SELL rows as 0.1, 0.3, 0.5, 1, 3 BTC away from best.
+- Display ask/BUY rows as 3, 1, 0.5, 0.3, 0.1 BTC, then best ask toward MID.
+  After MID, display best bid, then bid/SELL rows as 0.1, 0.3, 0.5, 1, 3 BTC.
+- Calculate and display best ask/bid impact as the percentage distance from MID.
 - Calculate impact from `mid = (bestAsk + bestBid) / 2`.
 - Display arrival-price impact as a percentage.
 - Use `price impact = midから価格までの距離` as the Slack methodology caption.

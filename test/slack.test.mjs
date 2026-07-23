@@ -49,11 +49,17 @@ test("Slack text uses the requested display order and one blank line between exc
   const midStart = bitFlyer.indexOf("MID ");
   const bidRows = [0.1, 0.3, 0.5, 1, 3].map((target) =>
     bitFlyer.indexOf(`\n${String(target).padStart(4)} |`, midStart));
+  const bestAskStart = bitFlyer.indexOf("\nbest |");
+  const bestBidStart = bitFlyer.indexOf("\nbest |", midStart);
   const bidHeaderStart = bitFlyer.indexOf("数量", midStart);
   const bidLabelStart = bitFlyer.indexOf("BID / SELL", midStart);
 
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
+  assert.ok(askRows.at(-1) < bestAskStart);
+  assert.ok(bestAskStart < midStart);
+  assert.ok(midStart < bestBidStart);
+  assert.ok(bestBidStart < bidRows[0]);
   assert.ok(bidRows.at(-1) < bidHeaderStart);
   assert.ok(bidHeaderStart < bidLabelStart);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
@@ -80,6 +86,15 @@ test("Slack text uses the requested display order and one blank line between exc
   );
   assert.match(text, /\n   3 \|   10,000,300 \|      0\.0600%\n/);
   assert.match(text, /\n 0\.1 \|   10,000,010 \|      0\.0020%\n/);
+  assert.match(
+    bitFlyer,
+    /\nbest \|   10,001,000 \|      0\.0100%\n────────────────\nMID/,
+  );
+  assert.match(
+    bitFlyer,
+    /MID 10,000,000\.0\n────────────────\nbest \|    9,999,000 \|      0\.0100%\n/,
+  );
+  assert.equal([...text.matchAll(/\nbest \|/g)].length, 4);
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);
   assert.match(text, /[\d,.]+ \| +\d+\.\d{4}%/);
 });

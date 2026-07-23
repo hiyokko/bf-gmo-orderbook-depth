@@ -82,9 +82,11 @@ function formatExchangeBlock(snapshot) {
     "ASK / BUY",
     TABLE_HEADER,
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
+    formatBestRow(snapshot.bestAsk, snapshot.mid),
     MID_SEPARATOR,
     `MID ${formatPrice(snapshot.mid, 1)}`,
     MID_SEPARATOR,
+    formatBestRow(snapshot.bestBid, snapshot.mid),
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
     TABLE_HEADER,
     "BID / SELL",
@@ -112,6 +114,14 @@ function formatSlackRow(result) {
     result.target,
     formatPrice(result.limit),
     formatImpactPercent(result.limitImpactPercent),
+  );
+}
+
+function formatBestRow(price, mid) {
+  return formatTableColumns(
+    "best",
+    formatPrice(price),
+    formatImpactPercent(Math.abs((price / mid) - 1) * 100),
   );
 }
 
