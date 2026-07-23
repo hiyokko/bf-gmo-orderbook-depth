@@ -33,7 +33,7 @@ export function createSlackText(snapshots, fetchedAtJst) {
   return [
     "*レバBTC 板Depthスナップショット*",
     `取得時刻: ${fetchedAtJst} JST`,
-    "価格影響 = mid（best askとbest bidの中間値）から到達価格までの距離",
+    "price impact = midから到達価格までの距離",
     "手数料・スプレッド外コストは除外",
     "",
     blocks.join("\n\n"),

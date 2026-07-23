@@ -14,6 +14,7 @@ These instructions apply to the repository root and all descendants.
 - Display ask/BUY rows as 3, 1, 0.5, 0.3, 0.1 BTC toward best, followed by bid/SELL rows as 0.1, 0.3, 0.5, 1, 3 BTC away from best.
 - Calculate impact from `mid = (bestAsk + bestBid) / 2`.
 - Display arrival-price impact as a percentage.
+- Use `price impact = midから到達価格までの距離` as the Slack methodology caption.
 - Display the mid price on its own line between horizontal separator lines.
 - Repeat the table header directly below both the ASK/BUY and BID/SELL labels.
 - Display an exchange API response timestamp on the line below its name and symbol.
