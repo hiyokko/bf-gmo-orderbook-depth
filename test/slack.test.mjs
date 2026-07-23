@@ -68,6 +68,7 @@ test("Slack text uses the requested display order and one blank line between exc
     /\*GMOコイン レバレッジ\* `BTC_JPY`\nAPI応答時刻 2026-07-23T11:52:11\.975Z\n```/,
   );
   assert.match(text, /impact = midから価格までの距離/);
+  assert.doesNotMatch(text, /手数料・スプレッド外コストは除外/);
   assert.match(
     text,
     /\n────────────────\nMID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\n/,
