@@ -12,8 +12,10 @@ function result(target) {
     best: 10_000_000,
     limit: 10_000_000 + target * 100,
     vwap: 10_000_000 + target * 50,
-    impactBps: target,
-    impactPercent: target / 100,
+    limitImpactBps: target * 2,
+    limitImpactPercent: target * 2 / 100,
+    vwapImpactBps: target,
+    vwapImpactPercent: target / 100,
     notional: target * 10_000_000,
     levelsUsed: 1,
     insufficient: false,
@@ -49,7 +51,15 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.deepEqual([...askRows].sort((left, right) => left - right), askRows);
   assert.deepEqual([...bidRows].sort((left, right) => left - right), bidRows);
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
-  assert.match(text, /\d+\.\d{2}bp \/ \d+\.\d{4}%/);
+  assert.match(
+    text,
+    /到達価格 \| +到達影響\(bp \/ %\) \| +VWAP \| +VWAP影響\(bp \/ %\)/,
+  );
+  assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（/);
+  assert.match(
+    text,
+    /\d+\.\d{2}bp \/ \d+\.\d{4}% \| +[\d,.]+ \| +\d+\.\d{2}bp \/ \d+\.\d{4}%/,
+  );
 });
 
 test("Slack formatting rejects snapshots missing a configured target", () => {

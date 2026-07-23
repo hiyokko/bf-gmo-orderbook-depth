@@ -157,21 +157,28 @@ function consumeSortedLevels(levels, target, direction) {
   }
 
   const vwap = notional / target;
-  const impactBps = direction === "BUY"
-    ? ((vwap / best) - 1) * 10_000
-    : (1 - (vwap / best)) * 10_000;
+  const limitImpactBps = calculateAdverseImpactBps(limit, best, direction);
+  const vwapImpactBps = calculateAdverseImpactBps(vwap, best, direction);
 
   return {
     target,
     best,
     limit,
     vwap,
-    impactBps,
-    impactPercent: impactBps / 100,
+    limitImpactBps,
+    limitImpactPercent: limitImpactBps / 100,
+    vwapImpactBps,
+    vwapImpactPercent: vwapImpactBps / 100,
     notional,
     levelsUsed,
     insufficient: false,
   };
+}
+
+function calculateAdverseImpactBps(price, best, direction) {
+  return direction === "BUY"
+    ? ((price / best) - 1) * 10_000
+    : (1 - (price / best)) * 10_000;
 }
 
 function validateExchange(exchange) {

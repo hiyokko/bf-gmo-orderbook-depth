@@ -31,7 +31,7 @@ export function createSlackText(snapshots, fetchedAtJst) {
   return [
     "*レバBTC 板Depthスナップショット*",
     `取得時刻: ${fetchedAtJst} JST`,
-    "価格影響 = 最良気配に対するVWAPの悪化幅（手数料・スプレッド外コストは除外）",
+    "価格影響 = 最良気配に対する到達価格・VWAPの悪化幅（手数料・スプレッド外コストは除外）",
     "",
     blocks.join("\n\n"),
   ].join("\n");
@@ -69,11 +69,11 @@ function formatExchangeBlock(snapshot) {
   return [
     `*${snapshot.name}* \`${snapshot.symbol}\`${sourceTime}`,
     "```",
-    "数量 | 到達価格(JPY) | VWAP(JPY)      | 影響(bp / %)",
-    "ASK / BUY（bestへ近づく順）",
+    "数量 |     到達価格 |    到達影響(bp / %) |           VWAP |    VWAP影響(bp / %)",
+    "ASK / BUY",
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
     "──────── BEST ────────",
-    "BID / SELL（bestから離れる順）",
+    "BID / SELL",
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
     "```",
   ].join("\n");
@@ -98,7 +98,12 @@ function formatSlackRow(result) {
   return [
     quantity,
     formatPrice(result.limit).padStart(12),
+    formatImpact(result.limitImpactBps, result.limitImpactPercent).padStart(20),
     formatPrice(result.vwap, 1).padStart(14),
-    `${result.impactBps.toFixed(2)}bp / ${result.impactPercent.toFixed(4)}%`.padStart(20),
+    formatImpact(result.vwapImpactBps, result.vwapImpactPercent).padStart(20),
   ].join(" | ");
+}
+
+function formatImpact(bps, percent) {
+  return `${bps.toFixed(2)}bp / ${percent.toFixed(4)}%`;
 }
