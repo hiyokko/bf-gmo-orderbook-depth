@@ -70,7 +70,7 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.match(text, /price impact = midから価格までの距離/);
   assert.match(
     text,
-    /\n────────────────\nMID 10,000,000\.0（SP 2,000）\n────────────────\n/,
+    /\n────────────────\nMID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\n/,
   );
   assert.match(
     bitFlyer,
@@ -92,7 +92,7 @@ test("Slack text uses the requested display order and one blank line between exc
   );
   assert.match(
     bitFlyer,
-    /MID 10,000,000\.0（SP 2,000）\n────────────────\nbest \|    9,999,000 \|      0\.0100%\n/,
+    /MID 10,000,000\.0（SP 2,000／0\.0200%）\n────────────────\nbest \|    9,999,000 \|      0\.0100%\n/,
   );
   assert.equal([...text.matchAll(/\nbest \|/g)].length, 4);
   assert.doesNotMatch(text, /\(JPY\)|BUY（|SELL（|\bbp\b|VWAP/);

@@ -18,8 +18,9 @@ These instructions apply to the repository root and all descendants.
 - Display arrival-price impact as a percentage.
 - Use `price impact = midから価格までの距離` as the Slack methodology caption.
 - Label the arrival-price impact column `price impact`.
-- Display the mid price and `SP = bestAsk - bestBid` on one line between
-  horizontal separator lines, formatted as `MID ...（SP ...）`.
+- Display the mid price, `SP = bestAsk - bestBid`, and the percentage
+  `SP / MID * 100` on one line between horizontal separator lines, formatted
+  as `MID ...（SP ...／...%）`.
 - Place the table header directly below ASK/BUY, and place the repeated table
   header and BID/SELL label below the SELL rows so the layout mirrors around MID.
 - Display an exchange API response timestamp on the line below its name and symbol.

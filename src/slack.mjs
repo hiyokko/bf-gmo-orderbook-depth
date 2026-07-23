@@ -84,9 +84,7 @@ function formatExchangeBlock(snapshot) {
     ...orderedRows(snapshot.buy, DISPLAY_TARGETS.askBuy),
     formatBestRow(snapshot.bestAsk, snapshot.mid),
     MID_SEPARATOR,
-    `MID ${formatPrice(snapshot.mid, 1)}（SP ${formatPrice(
-      snapshot.bestAsk - snapshot.bestBid,
-    )}）`,
+    formatMidLine(snapshot),
     MID_SEPARATOR,
     formatBestRow(snapshot.bestBid, snapshot.mid),
     ...orderedRows(snapshot.sell, DISPLAY_TARGETS.bidSell),
@@ -125,6 +123,14 @@ function formatBestRow(price, mid) {
     formatPrice(price),
     formatImpactPercent(Math.abs((price / mid) - 1) * 100),
   );
+}
+
+function formatMidLine({ bestAsk, bestBid, mid }) {
+  const spread = bestAsk - bestBid;
+  const spreadPercent = spread / mid * 100;
+  return `MID ${formatPrice(mid, 1)}（SP ${formatPrice(spread)}／${
+    formatImpactPercent(spreadPercent)
+  }）`;
 }
 
 function formatImpactPercent(percent) {
