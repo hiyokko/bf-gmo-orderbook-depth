@@ -39,7 +39,7 @@ test("Slack text uses the requested display order and one blank line between exc
       "BTC_JPY",
       "2026-07-23T11:52:11.975Z",
     ),
-  ], "2026/07/23 12:00:00");
+  ]);
 
   const bitFlyerStart = text.indexOf("*bitFlyer Crypto CFD*");
   const gmoStart = text.indexOf("*GMOコイン レバレッジ*");
@@ -65,8 +65,9 @@ test("Slack text uses the requested display order and one blank line between exc
   assert.match(text, /```\n\n\*GMOコイン レバレッジ\*/);
   assert.match(
     text,
-    /\*GMOコイン レバレッジ\* `BTC_JPY`\nAPI応答時刻 2026-07-23T11:52:11\.975Z\n```/,
+    /\*GMOコイン レバレッジ\* `BTC_JPY`\n```/,
   );
+  assert.doesNotMatch(text, /取得時刻|API応答時刻/);
   assert.match(text, /impact = midからpriceまでの距離/);
   assert.doesNotMatch(text, /手数料・スプレッド外コストは除外/);
   assert.match(
@@ -136,7 +137,7 @@ test("Slack formatting rejects snapshots missing a configured target", () => {
   const incomplete = snapshot("Test", "BTC_JPY");
   incomplete.buy = incomplete.buy.slice(1);
   assert.throws(
-    () => createSlackText([incomplete], "2026/07/23 12:00:00"),
+    () => createSlackText([incomplete]),
     /0.1 BTC is missing/,
   );
 });

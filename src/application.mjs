@@ -5,7 +5,6 @@ import {
 } from "./slack.mjs";
 import {
   createReport,
-  formatJst,
   saveReport,
 } from "./report.mjs";
 
@@ -22,7 +21,7 @@ export async function runOrderbookDepth({
   }
 
   const snapshots = await fetchSnapshots({ fetchImpl });
-  const slackText = createSlackText(snapshots, formatJst(fetchedAt));
+  const slackText = createSlackText(snapshots);
   const slack = {
     requested: !dryRun,
     posted: false,

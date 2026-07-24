@@ -43,6 +43,7 @@ test("application creates a dry-run report without calling Slack", async () => {
     assert.equal(result.report.slack.requested, false);
     assert.equal(saved.exchanges.length, 2);
     assert.deepEqual(saved.displayOrder.askBuy, [3, 1, 0.5, 0.3, 0.1]);
+    assert.doesNotMatch(result.slackText, /取得時刻|API応答時刻/);
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }

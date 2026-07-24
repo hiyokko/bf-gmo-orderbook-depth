@@ -31,7 +31,7 @@ export function formatPrice(value, decimals = 0) {
   });
 }
 
-export function createSlackText(snapshots, fetchedAtJst) {
+export function createSlackText(snapshots) {
   if (!Array.isArray(snapshots) || snapshots.length === 0) {
     throw new Error("At least one exchange snapshot is required");
   }
@@ -39,7 +39,6 @@ export function createSlackText(snapshots, fetchedAtJst) {
   const blocks = snapshots.map(formatExchangeBlock);
   return [
     "*レバBTC 板Depthスナップショット*",
-    `取得時刻: ${fetchedAtJst} JST`,
     "impact = midからpriceまでの距離",
     "",
     blocks.join("\n\n"),
@@ -72,12 +71,8 @@ export async function postToSlack(text, webhookUrl, {
 }
 
 function formatExchangeBlock(snapshot) {
-  const metadata = [`*${snapshot.name}* \`${snapshot.symbol}\``];
-  if (snapshot.sourceTime) {
-    metadata.push(`API応答時刻 ${snapshot.sourceTime}`);
-  }
   return [
-    ...metadata,
+    `*${snapshot.name}* \`${snapshot.symbol}\``,
     "```",
     "ASK / BUY",
     TABLE_HEADER,

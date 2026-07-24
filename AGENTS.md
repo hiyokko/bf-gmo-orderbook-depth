@@ -23,7 +23,7 @@ These instructions apply to the repository root and all descendants.
   as `MID ...（SP ...／...%）`.
 - Place the table header directly below ASK/BUY, and place the repeated table
   header and BID/SELL label below the SELL rows so the layout mirrors around MID.
-- Display an exchange API response timestamp on the line below its name and symbol.
+- Do not display fetch or exchange API response timestamps in Slack.
 - Align Slack table columns to Slack's rendered code-block font, treating
   Japanese characters as 1.5 ASCII character widths.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
