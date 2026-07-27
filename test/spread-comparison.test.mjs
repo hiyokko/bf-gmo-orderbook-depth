@@ -51,7 +51,7 @@ test("comparison follows the current SBIVC listing and distinguishes unavailable
   assert.deepEqual(comparison.leverage.rows.map((row) => row.symbol), ["BTC", "DAI"]);
   assert.deepEqual(
     comparison.leverage.venues.map((venue) => venue.label),
-    ["SBI VC", "bF", "GMO", "SBI FX", "RW", "FXTF"],
+    ["SBI VC", "bF", "GMO"],
   );
 });
 

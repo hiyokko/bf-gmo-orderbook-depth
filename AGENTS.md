@@ -38,17 +38,11 @@ These instructions apply to the repository root and all descendants.
   Do not use the BTC-only Echo API for the multi-asset comparison.
 - Display spot dealer-spread columns in this order: SBI VC, bb, bF, CC, GMO,
   OKJ. Do not display BPJ or CT columns. Display leverage columns in this
-  order: SBI VC, bF, GMO, SBI FX, RW, FXTF.
-- Use best bid/ask for leverage exchange orderbooks (GMO and Rakuten Wallet)
-  and the official two-way dealer quotes for leverage OTC/CFD venues.
+  order: SBI VC, bF, GMO.
+- Use the official two-way quote for SBI VC and best bid/ask for the bitFlyer
+  and GMO leverage orderbooks.
 - Fetch GMO spot and leverage best bid/ask from its documented public ticker
   endpoint, using plain symbols for spot and `_JPY` symbols for leverage.
-- Discover enabled personal JPY CFD products from Rakuten Wallet's public
-  symbol endpoint at runtime, respect its 200 ms public-API interval, and fetch
-  each matching SBIVC leverage symbol's best bid/ask from its orderbook.
-- Fetch SBI FX Trade's BTC/JPY, XRP/JPY, and ETH/JPY quotes from the official
-  public website feed, and FXTF's BTC/JPY and ETH/JPY quotes from the official
-  public real-time-rate feed.
 - Calculate spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
   percentage as `(ask - bid) / mid * 100`.
 - Display spot spread percentages with two decimal places. Keep leverage spread

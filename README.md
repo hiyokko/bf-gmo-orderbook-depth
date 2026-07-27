@@ -9,7 +9,7 @@
   (`BTC_JPY`) の0.1 / 0.3 / 0.5 / 1 / 3 BTC板Depth
 - SBIVCの現在取扱銘柄を基準にしたスプレッド比較
   - 現物: SBI VC / bb / bF / CC / GMO / OKJ
-  - レバレッジ: SBI VC / bF / GMO / SBI FX / RW / FXTF
+  - レバレッジ: SBI VC / bF / GMO
 
 ## 実行スケジュール
 
@@ -68,11 +68,8 @@ SBIVCの現行銘柄ごとに呼び出します。このエンドポイントは
 いますが、公開API仕様書には掲載されていないため、応答が変わった場合は該当列を
 推測で補完せず取得エラーとして扱います。
 
-レバレッジでは、GMOとRW（楽天ウォレット）は取引所板のbest bid/ask、
-SBI VC・bF・SBI FX・FXTFは公式の2-wayレートを比較します。楽天ウォレットは
-公式公開APIの有効な個人向けJPY証拠金銘柄を実行時に取得するため、取扱変更を
-固定リストで補いません。SBI FXとFXTFは各社公式Web画面が利用する公開レートを
-取得します。GMOは公式Public APIのtickerを使い、現物シンボルとレバレッジの
+レバレッジでは、SBI VCの公式2-wayレートと、bF・GMOの板best bid/askを
+比較します。GMOは公式Public APIのtickerを使い、現物シンボルとレバレッジの
 `_JPY` シンボルを動的に判別します。
 
 ### 板Depth
@@ -182,8 +179,5 @@ npm test
 - [bitFlyer販売所](https://bitflyer.com/ja-jp/ex/buysell)
 - [GMOコイン API](https://api.coin.z.com/docs/)
 - [Coincheck価格一覧](https://coincheck.com/ja/exchange/prices)
-- [楽天ウォレット 証拠金取引所API](https://www.rakuten-wallet.co.jp/service/api-leverage-exchange/)
-- [SBI FXトレード 暗号資産CFD](https://www.sbifxt.co.jp/service/cfd_index.html)
-- [FXTF 暗号資産CFDリアルタイムレート](https://www.fxtrade.co.jp/crypto/rate/)
 
 板は取得直後から変化するため、結果はスナップショットとして扱ってください。手数料・資金調達料・取得後の価格変動は計算に含みません。
