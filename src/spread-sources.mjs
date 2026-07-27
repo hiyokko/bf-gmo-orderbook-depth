@@ -6,11 +6,34 @@ export const SPREAD_SOURCE_URLS = Object.freeze({
   bitflyerSpot: "https://bitflyer.com/api/app/market/price2",
   bitflyerLeverage: "https://api.bitflyer.com/v1/getboard?product_code=FX_BTC_JPY",
   coincheck: "https://coincheck.com/front_api/marketplace_rates",
-  gmo: "https://api.coin.z.com/public/v1/ticker",
+  gmoSpot: "https://coin.z.com/api/v1/master/getCurrentRate.json",
+  gmoExchange: "https://api.coin.z.com/public/v1/ticker",
   bitbank: "https://public.bitbank.cc/dealer/feed",
   okj: "https://www.okj.com/v2/asset/transaction/public/currencies?checkOnline=true&dynamicQuotePrecision=true",
 });
 
+const GMO_DEALER_PRODUCT_IDS = Object.freeze({
+  1001: "BTC",
+  1002: "ETH",
+  1003: "BCH",
+  1004: "LTC",
+  1005: "XRP",
+  1007: "XLM",
+  1013: "DOT",
+  1014: "ATOM",
+  1020: "ADA",
+  1021: "LINK",
+  1022: "DOGE",
+  1023: "SOL",
+  1026: "FIL",
+  1027: "SAND",
+  1028: "CHZ",
+  1030: "AVAX",
+  1032: "SUI",
+  1033: "ZPG",
+  1034: "ZPGAG",
+  1035: "ZPGPT",
+});
 const MAX_REQUEST_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY_MS = 250;
 const BITFLYER_SPOT_BATCH_SIZE = 6;
@@ -143,21 +166,36 @@ export function parseBitflyerSpotRate(body) {
   return quotes;
 }
 
-export function parseGmoRates(body) {
-  const spot = {};
+export function parseGmoDealerRates(body) {
+  const quotes = {};
+  for (const row of body?.data || []) {
+    const symbol = GMO_DEALER_PRODUCT_IDS[String(row?.productId ?? "")];
+    if (
+      !symbol
+      || row?.bidValidFlag === false
+      || row?.askValidFlag === false
+    ) {
+      continue;
+    }
+    assignQuote(quotes, symbol, row?.bid, row?.ask);
+  }
+  return quotes;
+}
+
+export function parseGmoExchangeRates(body) {
   const leverage = {};
   if (body?.status !== undefined && Number(body.status) !== 0) {
-    return { spot: { gmo: spot }, leverage: { gmo: leverage } };
+    return leverage;
   }
 
   for (const row of body?.data || []) {
-    const match = /^([A-Z][A-Z0-9]{1,15})(_JPY)?$/.exec(
+    const match = /^([A-Z][A-Z0-9]{1,15})_JPY$/.exec(
       String(row?.symbol || "").toUpperCase(),
     );
     if (!match) continue;
-    assignQuote(match[2] ? leverage : spot, match[1], row?.bid, row?.ask);
+    assignQuote(leverage, match[1], row?.bid, row?.ask);
   }
-  return { spot: { gmo: spot }, leverage: { gmo: leverage } };
+  return leverage;
 }
 
 export function parseBitbankRates(body) {
@@ -238,10 +276,19 @@ async function fetchCoincheck(options) {
 }
 
 async function fetchGmo(options) {
-  const parsed = parseGmoRates(await requestJson(SPREAD_SOURCE_URLS.gmo, options));
-  requireQuotes(parsed.spot.gmo, "GMO spot");
-  requireQuotes(parsed.leverage.gmo, "GMO leverage");
-  return parsed;
+  const [dealerBody, exchangeBody] = await Promise.all([
+    requestJson(SPREAD_SOURCE_URLS.gmoSpot, options),
+    requestJson(SPREAD_SOURCE_URLS.gmoExchange, options),
+  ]);
+  const spot = requireQuotes(
+    parseGmoDealerRates(dealerBody),
+    "GMO spot dealer",
+  );
+  const leverage = requireQuotes(
+    parseGmoExchangeRates(exchangeBody),
+    "GMO leverage",
+  );
+  return { spot: { gmo: spot }, leverage: { gmo: leverage } };
 }
 
 async function fetchBitbank(options) {

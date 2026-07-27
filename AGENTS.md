@@ -41,8 +41,12 @@ These instructions apply to the repository root and all descendants.
   order: SBI VC, bF, GMO.
 - Use the official two-way quote for SBI VC and best bid/ask for the bitFlyer
   and GMO leverage orderbooks.
-- Fetch GMO spot and leverage best bid/ask from its documented public ticker
-  endpoint, using plain symbols for spot and `_JPY` symbols for leverage.
+- Fetch GMO spot dealer quotes from the official website's unauthenticated
+  `api/v1/master/getCurrentRate.json` feed and map its current dealer product
+  IDs. Never use the exchange Public API's plain symbols for the GMO spot
+  dealer column.
+- Fetch GMO leverage best bid/ask from its documented Public API ticker,
+  using only `_JPY` symbols for leverage.
 - Calculate spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
   percentage as `(ask - bid) / mid * 100`.
 - Display spot spread percentages with two decimal places. Keep leverage spread

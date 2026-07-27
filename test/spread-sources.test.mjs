@@ -5,7 +5,8 @@ import {
   parseBitbankRates,
   parseBitflyerSpotRate,
   parseCoincheckRates,
-  parseGmoRates,
+  parseGmoDealerRates,
+  parseGmoExchangeRates,
   parseOkjRates,
   parseSbivcListings,
   parseSbivcRates,
@@ -140,8 +141,23 @@ test("source parsers normalize known venue symbol aliases", () => {
   );
 });
 
-test("GMO parser separates spot and leverage products", () => {
-  const gmo = parseGmoRates({
+test("GMO dealer parser maps current product IDs and ignores invalid quotes", () => {
+  const quotes = parseGmoDealerRates({
+    data: [
+      { productId: 1001, bid: "90", ask: "110", bidValidFlag: true, askValidFlag: true },
+      { productId: 1034, bid: "200", ask: "205", bidValidFlag: true, askValidFlag: true },
+      { productId: 1002, bid: "50", ask: "55", bidValidFlag: false, askValidFlag: true },
+      { productId: 9999, bid: "1", ask: "2", bidValidFlag: true, askValidFlag: true },
+    ],
+  });
+  assert.deepEqual(quotes, {
+    BTC: { bid: 90, ask: 110 },
+    ZPGAG: { bid: 200, ask: 205 },
+  });
+});
+
+test("GMO exchange parser uses only leveraged _JPY products", () => {
+  const leverage = parseGmoExchangeRates({
     status: 0,
     data: [
       { symbol: "BTC", bid: "100", ask: "102" },
@@ -149,7 +165,8 @@ test("GMO parser separates spot and leverage products", () => {
       { symbol: "SUI_JPY", bid: "200", ask: "205" },
     ],
   });
-  assert.deepEqual(gmo.spot.gmo.BTC, { bid: 100, ask: 102 });
-  assert.deepEqual(gmo.leverage.gmo.BTC, { bid: 101, ask: 103 });
-  assert.deepEqual(gmo.leverage.gmo.SUI, { bid: 200, ask: 205 });
+  assert.deepEqual(leverage, {
+    BTC: { bid: 101, ask: 103 },
+    SUI: { bid: 200, ask: 205 },
+  });
 });
