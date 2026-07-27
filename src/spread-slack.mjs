@@ -21,13 +21,9 @@ export function createSpreadSlackMessages(comparison, errors = {}) {
     formatSection("レバレッジスプレッド（%）", comparison?.leverage, "spreadPercent"),
   ];
   const errorLines = formatErrorLines(errors);
-  const hasError = hasErrorCells(comparison);
-  const legend = [
-    hasError
-      ? "`-` = 対象外または公式公開レートなし / `ERR` = 取得・応答エラー"
-      : "`-` = 対象外または公式公開レートなし",
-    ...(errorLines.length > 0 ? ["", "*取得エラー*", ...errorLines] : []),
-  ].join("\n");
+  const errorFooter = errorLines.length > 0
+    ? ["*取得エラー*", ...errorLines].join("\n")
+    : null;
   const messages = sections.map((section, index) => [
     ...(index === 0
       ? [
@@ -36,7 +32,9 @@ export function createSpreadSlackMessages(comparison, errors = {}) {
         ]
       : []),
     section,
-    ...(index === sections.length - 1 ? ["", legend] : []),
+    ...(index === sections.length - 1 && errorFooter
+      ? ["", errorFooter]
+      : []),
   ].join("\n"));
 
   for (const message of messages) {
@@ -101,16 +99,6 @@ function formatErrorLines(errors) {
     }
   }
   return lines;
-}
-
-function hasErrorCells(comparison) {
-  return ["spot", "leverage"].some((market) => (
-    comparison?.[market]?.rows?.some((row) => (
-      Object.values(row.cells || {}).some(
-        (cell) => cell?.status === "error" || cell?.status === "invalid",
-      )
-    ))
-  ));
 }
 
 function padStart(value, width) {

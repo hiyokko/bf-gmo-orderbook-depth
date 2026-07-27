@@ -90,6 +90,7 @@ test("Slack output contains all four aligned comparison tables", () => {
   assert.match(text, /ERR/);
   assert.match(text, /取得エラー/);
   assert.doesNotMatch(text, /spread = 買値/);
+  assert.doesNotMatch(text, /対象外または公式公開レートなし/);
 
   const codeBlocks = [...text.matchAll(/```([\s\S]*?)```/g)].map((match) => match[1]);
   assert.equal(codeBlocks.length, 4);
