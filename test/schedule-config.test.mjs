@@ -51,6 +51,7 @@ test("spread comparison workflows use the same JST slots and protect the Slack s
   assert.match(workflow, /timezone: "Asia\/Tokyo"/);
   assert.match(workflow, /permissions:\n  actions: read\n  contents: read/);
   assert.match(workflow, /SLACK_WEBHOOK_URL: \$\{\{ secrets\.SLACK_WEBHOOK_URL \}\}/);
+  assert.match(workflow, /SPREAD_DISABLED_VENUES: bp,ct/);
   assert.doesNotMatch(workflow, /pull_request:|push:/);
 
   assert.match(watchdog, /timezone: "Asia\/Tokyo"/);

@@ -59,6 +59,12 @@ Excelの `CompareSheets` と同じ定義で、次の4表を出力します。
 Slack側の長文分割で等幅コードブロックが崩れないよう、4種類の表は
 1表ずつ独立したメッセージとして順番に投稿します。
 
+BITPOINTとCoinTradeのWeb画面用レートはGitHubホストランナーから
+HTTP 403となります。BITPOINTのSmart APIは現在利用不可、CoinTradeは
+公式にAPI未提供と案内しているため、GitHub Actionsでは両列を `-` とします。
+両社の値を自動取得する場合は、日本国内ネットワーク上のself-hosted runnerが
+別途必要です。
+
 ### 板Depth
 
 - mid: best askとbest bidの中間値
