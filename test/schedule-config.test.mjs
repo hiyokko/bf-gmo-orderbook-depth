@@ -20,9 +20,9 @@ test("primary workflow uses the requested JST schedule and hardened permissions"
   assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
 });
 
-test("watchdog can dispatch recovery runs without receiving the Slack secret", async () => {
+test("unified watchdog can recover both reports without receiving the Slack secret", async () => {
   const workflow = await readFile(
-    new URL("../.github/workflows/orderbook-depth-watchdog.yml", import.meta.url),
+    new URL("../.github/workflows/report-watchdog.yml", import.meta.url),
     "utf8",
   );
 
@@ -30,6 +30,7 @@ test("watchdog can dispatch recovery runs without receiving the Slack secret", a
   assert.match(workflow, /timezone: "Asia\/Tokyo"/);
   assert.match(workflow, /permissions:\n  actions: write\n  contents: read/);
   assert.match(workflow, /WATCHDOG_DRY_RUN:/);
+  assert.match(workflow, /npm run watchdog/);
   assert.doesNotMatch(workflow, /SLACK_WEBHOOK_URL|pull_request:|push:/);
 
   const actionReferences = [...workflow.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
@@ -37,13 +38,9 @@ test("watchdog can dispatch recovery runs without receiving the Slack secret", a
   assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
 });
 
-test("spread comparison workflows use the same JST slots and protect the Slack secret", async () => {
+test("spread comparison workflow uses the same JST slots and protects the Slack secret", async () => {
   const workflow = await readFile(
     new URL("../.github/workflows/spread-comparison.yml", import.meta.url),
-    "utf8",
-  );
-  const watchdog = await readFile(
-    new URL("../.github/workflows/spread-comparison-watchdog.yml", import.meta.url),
     "utf8",
   );
 
@@ -54,13 +51,19 @@ test("spread comparison workflows use the same JST slots and protect the Slack s
   assert.doesNotMatch(workflow, /SPREAD_DISABLED_VENUES/);
   assert.doesNotMatch(workflow, /pull_request:|push:/);
 
-  assert.match(watchdog, /timezone: "Asia\/Tokyo"/);
-  assert.match(watchdog, /permissions:\n  actions: write\n  contents: read/);
-  assert.doesNotMatch(watchdog, /SLACK_WEBHOOK_URL|pull_request:|push:/);
+  const actionReferences = [...workflow.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
+  assert.ok(actionReferences.length >= 2);
+  assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
+});
 
-  for (const contents of [workflow, watchdog]) {
-    const actionReferences = [...contents.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
-    assert.ok(actionReferences.length >= 2);
-    assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
+test("legacy watchdog workflows are removed", async () => {
+  for (const file of [
+    "../.github/workflows/orderbook-depth-watchdog.yml",
+    "../.github/workflows/spread-comparison-watchdog.yml",
+  ]) {
+    await assert.rejects(
+      readFile(new URL(file, import.meta.url), "utf8"),
+      { code: "ENOENT" },
+    );
   }
 });

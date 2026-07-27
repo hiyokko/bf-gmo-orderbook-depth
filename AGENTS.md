@@ -57,8 +57,9 @@ These instructions apply to the repository root and all descendants.
   two-way quote. Display such cells as `-`.
 - Post each of the four spread-comparison tables as an independent Slack
   message below 4,000 characters so Slack cannot split a code fence.
-- Keep the spread-comparison schedule and its watchdog separate from the
-  orderbook-depth workflow so either report can recover independently.
+- Keep the two primary report workflows separate. Use one unified watchdog
+  workflow that evaluates and dispatches each report independently so a failure
+  for one report does not prevent recovery of the other.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
 - Run `npm test`, `npm run dry-run`, and `npm run spread:dry-run` after code or workflow changes.
@@ -70,7 +71,7 @@ These instructions apply to the repository root and all descendants.
 - Never print, commit, upload, document, or place the Webhook URL in workflow inputs.
 - Never trigger a secret-bearing workflow from pull requests or untrusted code.
 - Give `GITHUB_TOKEN` read-only contents permission.
-- Limit `actions: write` to watchdog workflows that dispatch their primary workflow.
+- Limit `actions: write` to the unified watchdog workflow that dispatches the primary workflows.
 - Pin every referenced GitHub Action to a full-length commit SHA.
 - Pass the Slack secret only to the single step that posts to Slack.
 - Never pass the Slack secret to watchdog workflows.

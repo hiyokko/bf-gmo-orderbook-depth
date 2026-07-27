@@ -9,8 +9,7 @@
     "dry-run": "node scripts/run-orderbook-depth.mjs --dry-run",
     "watchdog": "node scripts/run-watchdog.mjs",
     "spread": "node scripts/run-spread-comparison.mjs",
-    "spread:dry-run": "node scripts/run-spread-comparison.mjs --dry-run",
-    "spread:watchdog": "node scripts/run-spread-watchdog.mjs"
+    "spread:dry-run": "node scripts/run-spread-comparison.mjs --dry-run"
   },
   "engines": {
     "node": ">=24"

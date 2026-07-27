@@ -1,14 +1,30 @@
+import { createGitHubActionsClient } from "../src/github-actions.mjs";
 import {
-  createGitHubActionsClient,
-  publicWorkflowRun,
-} from "../src/github-actions.mjs";
+  hasRecoveryFailures,
+  recoverReports,
+} from "../src/watchdog-application.mjs";
 import {
   ORDERBOOK_WORKFLOW,
-  classifyTargetRuns,
-  decideRecovery,
+  SPREAD_COMPARISON_WORKFLOW,
+  SPREAD_WATCHDOG_TITLE_PREFIX,
+  WATCHDOG_TITLE_PREFIX,
   selectWatchdogTarget,
-  workflowDispatchInputs,
 } from "../src/watchdog.mjs";
+
+const REPORTS = Object.freeze([
+  Object.freeze({
+    id: "orderbookDepth",
+    label: "Orderbook depth",
+    workflow: ORDERBOOK_WORKFLOW,
+    titlePrefix: WATCHDOG_TITLE_PREFIX,
+  }),
+  Object.freeze({
+    id: "spreadComparison",
+    label: "Spread comparison",
+    workflow: SPREAD_COMPARISON_WORKFLOW,
+    titlePrefix: SPREAD_WATCHDOG_TITLE_PREFIX,
+  }),
+]);
 
 const target = selectWatchdogTarget(Date.now(), {
   minLagMinutes: readNumberEnv("WATCHDOG_MIN_LAG_MINUTES", 20),
@@ -32,40 +48,21 @@ if (!target) {
     token: process.env.GITHUB_TOKEN,
     apiUrl: process.env.GITHUB_API_URL,
   });
-  const runs = await github.listWorkflowRuns(ORDERBOOK_WORKFLOW);
-  const classification = classifyTargetRuns(runs, target);
-  const decision = decideRecovery(classification, {
-    dryRun: readBooleanEnv("WATCHDOG_DRY_RUN"),
+  const dryRun = readBooleanEnv("WATCHDOG_DRY_RUN");
+  const results = await recoverReports({
+    github,
+    reports: REPORTS,
+    target,
+    dryRun,
+    ref: process.env.GITHUB_REF_NAME || "main",
   });
-
-  if (decision.action === "skip") {
-    console.log(JSON.stringify({
-      skipped: true,
-      reason: decision.reason,
-      target,
-      run: publicWorkflowRun(decision.run),
-    }, null, 2));
-  } else if (decision.action === "dry_run") {
-    console.log(JSON.stringify({
-      dryRun: true,
-      wouldDispatch: true,
-      target,
-      inputs: workflowDispatchInputs(target),
-      unsuccessfulRuns: classification.unsuccessful.map(publicWorkflowRun),
-    }, null, 2));
-  } else {
-    const dispatch = await github.dispatchWorkflow(ORDERBOOK_WORKFLOW, {
-      ref: process.env.GITHUB_REF_NAME || "main",
-      inputs: workflowDispatchInputs(target),
-    });
-    console.log(JSON.stringify({
-      watchdog: true,
-      dispatched: true,
-      target,
-      dispatch,
-      unsuccessfulRuns: classification.unsuccessful.map(publicWorkflowRun),
-    }, null, 2));
-  }
+  console.log(JSON.stringify({
+    watchdog: true,
+    dryRun,
+    target,
+    results,
+  }, null, 2));
+  if (hasRecoveryFailures(results)) process.exitCode = 1;
 }
 
 function readNumberEnv(name, fallback) {

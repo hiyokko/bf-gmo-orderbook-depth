@@ -26,9 +26,10 @@ GitHub Actionsが次の時刻に自動実行します。
 
 ### Watchdog
 
-`.github/workflows/orderbook-depth-watchdog.yml` が毎時 `07 / 17 / 27 / 37 / 47 / 57` 分に直近の定時枠を確認します。定時から20分以上経過しても、その枠の正常完了または実行中の記録がなければ、元の `orderbook-depth.yml` をバックアップ実行します。6時間を超えた古い枠は追いかけません。
+`.github/workflows/report-watchdog.yml` が毎時 `07 / 17 / 27 / 37 / 47 / 57` 分に直近の定時枠を確認します。定時から20分以上経過しても、その枠の正常完了または実行中の記録がなければ、`orderbook-depth.yml` と `spread-comparison.yml` のうち未完了のものだけをバックアップ実行します。6時間を超えた古い枠は追いかけません。
 
-スプレッド比較は `spread-comparison-watchdog.yml` が同じ条件を独立して監視します。
+2種類のレポートは個別に判定・再実行されるため、片方の確認やdispatchが
+失敗しても、もう片方の復旧処理は継続します。
 
 正常完了の判定にはGitHub Actionsの実行履歴を利用するため、外部DBや追加Secretは不要です。元ワークフローとバックアップは同じ同時実行グループで直列化され、投稿直前にも同じ枠の成功記録を確認するため、遅延した定時実行との二重投稿を防ぎます。
 
@@ -151,6 +152,7 @@ npm test
 - `src/report.mjs`: JST表記とJSONレポート
 - `src/github-actions.mjs`: GitHub Actions APIクライアント
 - `src/watchdog.mjs`: 定時枠、実行履歴分類、復旧判断
+- `src/watchdog-application.mjs`: 2レポートの独立した監視・復旧制御
 - `src/spread-sources.mjs`: SBIVC現行一覧と各社2-wayレートの取得・変換
 - `src/spread-comparison.mjs`: スプレッド計算と比較表データ
 - `src/spread-slack.mjs`: 4種類のSlack比較表

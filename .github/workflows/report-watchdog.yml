@@ -1,13 +1,15 @@
-name: Spread comparison watchdog
+name: Report watchdog
 
 on:
   schedule:
-    - cron: "9,19,29,39,49,59 * * * *"
+    # Check both reports independently and recover the latest unfinished
+    # 01:00, 09:00, or 17:00 JST execution slot.
+    - cron: "7,17,27,37,47,57 * * * *"
       timezone: "Asia/Tokyo"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Check only; do not dispatch the spread workflow
+        description: Check only; do not dispatch missing report workflows
         required: true
         default: true
         type: boolean
@@ -17,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: spread-comparison-watchdog
+  group: report-watchdog
   cancel-in-progress: true
 
 jobs:
@@ -39,10 +41,10 @@ jobs:
       - name: Run unit tests
         run: npm test
 
-      - name: Check the latest scheduled slot
+      - name: Check the latest scheduled slot for both reports
         env:
           GITHUB_TOKEN: ${{ github.token }}
           WATCHDOG_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
           WATCHDOG_MIN_LAG_MINUTES: "20"
           WATCHDOG_MAX_LAG_MINUTES: "360"
-        run: npm run spread:watchdog
+        run: npm run watchdog
