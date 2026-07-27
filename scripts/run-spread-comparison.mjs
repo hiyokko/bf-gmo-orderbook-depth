@@ -21,14 +21,10 @@ async function main() {
     dryRun: options.dryRun,
     webhookUrl: process.env.SLACK_WEBHOOK_URL?.trim(),
     outputPath,
-    disabledVenues: parseDisabledVenues(process.env.SPREAD_DISABLED_VENUES),
   });
   console.log(`Snapshot saved: ${result.outputPath}`);
   console.log(`SBIVC spot symbols: ${result.report.listings.spot.length}`);
   console.log(`SBIVC leverage symbols: ${result.report.listings.leverage.length}`);
-  if (result.report.disabledVenues.length > 0) {
-    console.log(`Disabled venues: ${result.report.disabledVenues.join(", ")}`);
-  }
   const sourceErrors = Object.entries(result.report.errors)
     .flatMap(([market, venues]) => Object.entries(venues)
       .filter(([, message]) => Boolean(message))
@@ -48,13 +44,4 @@ function parseArguments(argumentsList) {
   const unknown = argumentsList.filter((argument) => !supported.has(argument));
   if (unknown.length > 0) throw new Error(`Unknown argument: ${unknown.join(", ")}`);
   return { dryRun: argumentsList.includes("--dry-run") };
-}
-
-function parseDisabledVenues(value) {
-  return [...new Set(
-    String(value || "")
-      .split(",")
-      .map((venue) => venue.trim())
-      .filter(Boolean),
-  )];
 }

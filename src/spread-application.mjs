@@ -15,14 +15,13 @@ export async function runSpreadComparison({
   fetchImpl = globalThis.fetch,
   fetchedAt = new Date(),
   collectImpl = collectSpreadSources,
-  disabledVenues = [],
 } = {}) {
   if (!outputPath) throw new Error("Output path is required");
   if (!(fetchedAt instanceof Date) || Number.isNaN(fetchedAt.getTime())) {
     throw new Error("Fetched time must be a valid Date");
   }
 
-  const collected = await collectImpl({ fetchImpl, disabledVenues });
+  const collected = await collectImpl({ fetchImpl });
   const comparison = createSpreadComparison(collected);
   const slackMessages = createSpreadSlackMessages(comparison, collected.errors);
   const slackText = createSpreadSlackText(comparison, collected.errors);
@@ -57,7 +56,6 @@ export async function runSpreadComparison({
       spreadPercent: "(ask - bid) / mid * 100",
     },
     listings: collected.listings,
-    disabledVenues,
     errors: collected.errors,
     slack,
     comparison,

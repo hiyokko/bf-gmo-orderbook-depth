@@ -4,9 +4,7 @@ import {
   fetchBitflyerSpot,
   parseBitbankRates,
   parseBitflyerSpotRate,
-  parseBitpointRates,
   parseCoincheckRates,
-  parseCointradeRates,
   parseGmoRates,
   parseOkjRates,
   parseSbivcListings,
@@ -124,16 +122,6 @@ test("source parsers normalize known venue symbol aliases", () => {
     { bid: 10, ask: 11 },
   );
   assert.deepEqual(
-    parseBitpointRates({
-      ticker: [{
-        symbol: "LNKJPY",
-        bidPrice: "100",
-        askPrice: "102",
-      }],
-    }).LINK,
-    { bid: 100, ask: 102 },
-  );
-  assert.deepEqual(
     parseBitbankRates({
       data: { prices: [{ asset: "bcc", bid: "200", ask: "205" }] },
     }).BCH,
@@ -152,7 +140,7 @@ test("source parsers normalize known venue symbol aliases", () => {
   );
 });
 
-test("GMO and CoinTrade parsers separate products and ignore inactive rows", () => {
+test("GMO parser separates spot and leverage products", () => {
   const gmo = parseGmoRates({
     data: [
       { productId: 1001, bid: "100", ask: "102" },
@@ -161,15 +149,4 @@ test("GMO and CoinTrade parsers separate products and ignore inactive rows", () 
   });
   assert.deepEqual(gmo.spot.gmo.BTC, { bid: 100, ask: 102 });
   assert.deepEqual(gmo.leverage.gmo.BTC, { bid: 101, ask: 103 });
-
-  const cointrade = parseCointradeRates({
-    body: {
-      rate: [
-        ["EX_ETH/JPY", "", ["200", "", "", "", true], ["205", "", "", "", true]],
-        ["EX_XRP/JPY", "", ["10", "", "", "", false], ["11", "", "", "", true]],
-      ],
-    },
-  });
-  assert.deepEqual(cointrade.ETH, { bid: 200, ask: 205 });
-  assert.equal(cointrade.XRP, undefined);
 });

@@ -6,11 +6,8 @@ export const SPREAD_SOURCE_URLS = Object.freeze({
   bitflyerSpot: "https://bitflyer.com/api/app/market/price2",
   bitflyerLeverage: "https://api.bitflyer.com/v1/getboard?product_code=FX_BTC_JPY",
   coincheck: "https://coincheck.com/front_api/marketplace_rates",
-  bitpoint: "https://www.bitpoint.co.jp/pricedata/twoway/normal-price.json",
   gmo: "https://coin.z.com/api/v1/master/getCurrentRate.json",
   bitbank: "https://public.bitbank.cc/dealer/feed",
-  cointradeMaster: "https://coin-trade.cc/assets/json/currencyMaster.json",
-  cointradeRates: "https://trade.sf.coin-trade.cc/cccmdipresen/gw/market",
   okj: "https://www.okj.com/v2/asset/transaction/public/currencies?checkOnline=true&dynamicQuotePrecision=true",
 });
 
@@ -56,10 +53,8 @@ const BITFLYER_SPOT_BATCH_SIZE = 6;
 export async function collectSpreadSources({
   fetchImpl = globalThis.fetch,
   timeoutMs = RUNTIME_DEFAULTS.requestTimeoutMs,
-  disabledVenues = [],
 } = {}) {
   validateFetch(fetchImpl);
-  const disabled = new Set(disabledVenues.map((venue) => String(venue).trim()));
   const listingsHtml = await requestText(SPREAD_SOURCE_URLS.sbivcListings, {
     fetchImpl,
     timeoutMs,
@@ -98,13 +93,6 @@ export async function collectSpreadSources({
       }),
     },
     {
-      markets: ["spot"],
-      venues: ["bp"],
-      run: async () => ({
-        spot: { bp: await fetchBitpoint({ fetchImpl, timeoutMs }) },
-      }),
-    },
-    {
       markets: ["spot", "leverage"],
       venues: ["gmo"],
       run: () => fetchGmo({ fetchImpl, timeoutMs }),
@@ -118,15 +106,6 @@ export async function collectSpreadSources({
     },
     {
       markets: ["spot"],
-      venues: ["ct"],
-      run: async () => ({
-        spot: {
-          ct: await fetchCointrade(listings.spot, { fetchImpl, timeoutMs }),
-        },
-      }),
-    },
-    {
-      markets: ["spot"],
       venues: ["okj"],
       run: async () => ({
         spot: { okj: await fetchOkj({ fetchImpl, timeoutMs }) },
@@ -134,10 +113,7 @@ export async function collectSpreadSources({
     },
   ];
 
-  const enabledTasks = tasks.filter(
-    (task) => !task.venues.every((venue) => disabled.has(venue)),
-  );
-  await Promise.all(enabledTasks.map(async (task) => {
+  await Promise.all(tasks.map(async (task) => {
     try {
       mergeMarkets(quotes, await task.run());
     } catch (error) {
@@ -202,16 +178,6 @@ export function parseBitflyerSpotRate(body) {
   return quotes;
 }
 
-export function parseBitpointRates(body) {
-  const quotes = {};
-  for (const row of body?.ticker || []) {
-    const rawSymbol = String(row?.symbol || "").replace(/JPY$/, "").toUpperCase();
-    const symbol = rawSymbol === "LNK" ? "LINK" : rawSymbol;
-    assignQuote(quotes, symbol, row?.bidPrice, row?.askPrice);
-  }
-  return quotes;
-}
-
 export function parseGmoRates(body) {
   const spot = {};
   const leverage = {};
@@ -231,16 +197,6 @@ export function parseBitbankRates(body) {
     const rawSymbol = String(row?.asset || "").toUpperCase();
     const symbol = rawSymbol === "BCC" ? "BCH" : rawSymbol;
     assignQuote(quotes, symbol, row?.bid, row?.ask);
-  }
-  return quotes;
-}
-
-export function parseCointradeRates(body) {
-  const quotes = {};
-  for (const row of body?.body?.rate || []) {
-    const match = /^EX_([A-Z0-9]+)\/JPY$/.exec(String(row?.[0] || ""));
-    if (!match || row?.[2]?.[4] === false || row?.[3]?.[4] === false) continue;
-    assignQuote(quotes, match[1], row?.[2]?.[0], row?.[3]?.[0]);
   }
   return quotes;
 }
@@ -312,19 +268,6 @@ async function fetchCoincheck(options) {
   return requireQuotes(parseCoincheckRates(body), "Coincheck");
 }
 
-async function fetchBitpoint(options) {
-  return requireQuotes(
-    parseBitpointRates(await requestJson(SPREAD_SOURCE_URLS.bitpoint, {
-      ...options,
-      headers: {
-        accept: "application/json",
-        referer: "https://www.bitpoint.co.jp/chart/price-list/",
-      },
-    })),
-    "BITPOINT",
-  );
-}
-
 async function fetchGmo(options) {
   const parsed = parseGmoRates(await requestJson(SPREAD_SOURCE_URLS.gmo, options));
   requireQuotes(parsed.spot.gmo, "GMO spot");
@@ -337,35 +280,6 @@ async function fetchBitbank(options) {
     parseBitbankRates(await requestJson(SPREAD_SOURCE_URLS.bitbank, options)),
     "bitbank",
   );
-}
-
-async function fetchCointrade(targetSymbols, options) {
-  const master = await requestJson(SPREAD_SOURCE_URLS.cointradeMaster, options);
-  const supported = new Set(
-    (master?.currencies || [])
-      .map((currency) => String(currency?.symbol || "").toUpperCase())
-      .filter(Boolean),
-  );
-  const productIds = targetSymbols
-    .filter((symbol) => supported.has(symbol))
-    .map((symbol) => `EX_${symbol}/JPY`);
-  if (productIds.length === 0) {
-    throw new Error("CoinTrade currency master did not match any SBIVC symbols");
-  }
-
-  const body = await requestJson(SPREAD_SOURCE_URLS.cointradeRates, {
-    ...options,
-    method: "POST",
-    headers: { "content-type": "application/json;charset=UTF-8" },
-    body: JSON.stringify({
-      event: "priceFeedList",
-      data: { productIds },
-    }),
-  });
-  if (body?.meta?.status && body.meta.status !== "OK") {
-    throw new Error(`CoinTrade API returned status ${String(body.meta.status)}`);
-  }
-  return requireQuotes(parseCointradeRates(body), "CoinTrade");
 }
 
 async function fetchOkj(options) {

@@ -41,6 +41,10 @@ test("comparison follows the current SBIVC listing and distinguishes unavailable
   });
 
   assert.deepEqual(comparison.spot.rows.map((row) => row.symbol), ["BTC", "POL", "JPYSC"]);
+  assert.deepEqual(
+    comparison.spot.venues.map((venue) => venue.label),
+    ["SBI VC", "bF", "CC", "GMO", "bb", "OKJ"],
+  );
   assert.equal(comparison.spot.rows[0].cells.sbivc.spread, 2);
   assert.equal(comparison.spot.rows[1].cells.bf.status, "unavailable");
   assert.equal(comparison.spot.rows[2].cells.cc.status, "error");

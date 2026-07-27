@@ -8,7 +8,7 @@
 - bitFlyer Crypto CFD (`FX_BTC_JPY`) とGMOコインのレバレッジBTC
   (`BTC_JPY`) の0.1 / 0.3 / 0.5 / 1 / 3 BTC板Depth
 - SBIVCの現在取扱銘柄を基準にした販売所スプレッド比較
-  - 現物: SBI VC / BPJ / bF / CC / GMO / bb / CT / OKJ
+  - 現物: SBI VC / bF / CC / GMO / bb / OKJ
   - レバレッジ: SBI VC / bF / GMO
 
 ## 実行スケジュール
@@ -65,18 +65,6 @@ bitFlyer現物は公式販売所画面が利用する認証不要の `price2` �
 SBIVCの現行銘柄ごとに呼び出します。このエンドポイントは公式画面で使用されて
 いますが、公開API仕様書には掲載されていないため、応答が変わった場合は該当列を
 推測で補完せず取得エラーとして扱います。
-
-BITPOINT現物は公式価格一覧ページが公開している
-`pricedata/twoway/normal-price.json` の `bidPrice` と `askPrice` を使用します。
-`LNKJPY` は比較表の銘柄表記に合わせて `LINK` へ正規化します。
-ただし、このJSONはGitHubホストランナーからHTTP 403となることを実際の
-Actions dry-runで確認しているため、GitHub ActionsではBP列を `-` とします。
-国内ネットワーク上のローカル実行またはself-hosted runnerでは取得できます。
-
-CoinTradeのWeb画面用レートはGitHubホストランナーからHTTP 403となり、
-公式にもAPI未提供と案内されているため、GitHub ActionsではCT列を `-` とします。
-CTの値を自動取得する場合は、日本国内ネットワーク上のself-hosted runnerが
-別途必要です。
 
 ### 板Depth
 
@@ -185,6 +173,5 @@ npm test
 - [bitFlyer販売所](https://bitflyer.com/ja-jp/ex/buysell)
 - [GMOコイン API](https://api.coin.z.com/docs/)
 - [Coincheck価格一覧](https://coincheck.com/ja/exchange/prices)
-- [BITPOINT価格一覧](https://www.bitpoint.co.jp/chart/price-list/)
 
 板は取得直後から変化するため、結果はスナップショットとして扱ってください。手数料・資金調達料・取得後の価格変動は計算に含みません。
