@@ -81,6 +81,7 @@ test("Slack output contains all four aligned comparison tables", () => {
   assert.match(text, /JPYSC/);
   assert.match(text, /ERR/);
   assert.match(text, /取得エラー/);
+  assert.doesNotMatch(text, /spread = 買値/);
 
   const codeBlocks = [...text.matchAll(/```([\s\S]*?)```/g)].map((match) => match[1]);
   assert.equal(codeBlocks.length, 4);
@@ -97,6 +98,10 @@ test("Slack output contains all four aligned comparison tables", () => {
     leverage: {},
   });
   assert.equal(messages.length, 4);
+  assert.match(
+    messages[0],
+    /^\*暗号資産 販売所スプレッド比較\*\n\n\*現物スプレッド\*/,
+  );
   assert.ok(messages.every((message) => message.length < 4_000));
   assert.ok(messages.every((message) => (message.match(/```/g) || []).length === 2));
 });

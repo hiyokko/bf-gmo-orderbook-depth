@@ -32,7 +32,6 @@ export function createSpreadSlackMessages(comparison, errors = {}) {
     ...(index === 0
       ? [
           "*暗号資産 販売所スプレッド比較*",
-          "spread = 買値（ask）- 売値（bid）",
           "",
         ]
       : []),

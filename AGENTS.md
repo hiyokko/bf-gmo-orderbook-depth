@@ -44,6 +44,8 @@ These instructions apply to the repository root and all descendants.
   percentage as `(ask - bid) / mid * 100`.
 - Display spot spread percentages with two decimal places. Keep leverage spread
   percentages at four decimal places.
+- In Slack, place one blank line between the spread-comparison title and the
+  first table. Do not display a separate spread-formula caption.
 - Never substitute exchange-orderbook prices, mids, last prices, or inferred
   values for an unavailable dealer two-way quote. Display such cells as `-`.
 - Post each of the four spread-comparison tables as an independent Slack
