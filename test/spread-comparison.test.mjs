@@ -4,7 +4,10 @@ import {
   calculateSpread,
   createSpreadComparison,
 } from "../src/spread-comparison.mjs";
-import { createSpreadSlackText } from "../src/spread-slack.mjs";
+import {
+  createSpreadSlackMessages,
+  createSpreadSlackText,
+} from "../src/spread-slack.mjs";
 
 test("spread is ask minus bid and percent uses the quote mid", () => {
   assert.deepEqual(calculateSpread({ bid: 90, ask: 110 }), {
@@ -87,6 +90,14 @@ test("Slack output contains all four aligned comparison tables", () => {
       .map((line) => line.split("|").length);
     assert.equal(new Set(separatorCounts).size, 1);
   }
+
+  const messages = createSpreadSlackMessages(comparison, {
+    spot: { cc: "HTTP 500" },
+    leverage: {},
+  });
+  assert.equal(messages.length, 4);
+  assert.ok(messages.every((message) => message.length < 4_000));
+  assert.ok(messages.every((message) => (message.match(/```/g) || []).length === 2));
 });
 
 test("invalid crossed or non-positive quotes are rejected", () => {

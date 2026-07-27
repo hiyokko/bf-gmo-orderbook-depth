@@ -65,6 +65,36 @@ test("spread application preserves a report when Slack rejects a post", async ()
   }
 });
 
+test("spread application posts each comparison table as a separate message", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "spread-comparison-"));
+  const outputPath = path.join(directory, "latest.json");
+  const postedBodies = [];
+
+  try {
+    const result = await runSpreadComparison({
+      outputPath,
+      webhookUrl: "https://hooks.slack.com/services/T111/B222/secret",
+      collectImpl: async () => fixture(),
+      fetchImpl: async (_url, options) => {
+        postedBodies.push(JSON.parse(options.body));
+        return {
+          ok: true,
+          status: 200,
+          text: async () => "ok",
+        };
+      },
+    });
+
+    assert.equal(result.report.slack.posted, true);
+    assert.equal(result.report.slack.messageCount, 4);
+    assert.equal(postedBodies.length, 4);
+    assert.ok(postedBodies.every(({ text }) => text.length < 4_000));
+    assert.ok(postedBodies.every(({ text }) => (text.match(/```/g) || []).length === 2));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 function fixture() {
   return {
     listings: {

@@ -51,6 +51,11 @@ const GMO_LEVERAGE_PRODUCT_IDS = Object.freeze({
 });
 const MAX_REQUEST_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY_MS = 250;
+const BROWSER_JSON_HEADERS = Object.freeze({
+  accept: "application/json, text/plain, */*",
+  "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    + "(KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+});
 
 export async function collectSpreadSources({
   fetchImpl = globalThis.fetch,
@@ -275,7 +280,14 @@ async function fetchCoincheck(options) {
 
 async function fetchBitpoint(options) {
   return requireQuotes(
-    parseBitpointRates(await requestJson(SPREAD_SOURCE_URLS.bitpoint, options)),
+    parseBitpointRates(await requestJson(SPREAD_SOURCE_URLS.bitpoint, {
+      ...options,
+      headers: {
+        ...BROWSER_JSON_HEADERS,
+        referer: "https://www.bitpoint.co.jp/chart/price-list/",
+        "sec-fetch-site": "same-origin",
+      },
+    })),
     "BITPOINT",
   );
 }
@@ -295,7 +307,14 @@ async function fetchBitbank(options) {
 }
 
 async function fetchCointrade(targetSymbols, options) {
-  const master = await requestJson(SPREAD_SOURCE_URLS.cointradeMaster, options);
+  const master = await requestJson(SPREAD_SOURCE_URLS.cointradeMaster, {
+    ...options,
+    headers: {
+      ...BROWSER_JSON_HEADERS,
+      referer: "https://coin-trade.cc/",
+      "sec-fetch-site": "same-origin",
+    },
+  });
   const supported = new Set(
     (master?.currencies || [])
       .map((currency) => String(currency?.symbol || "").toUpperCase())
@@ -311,7 +330,13 @@ async function fetchCointrade(targetSymbols, options) {
   const body = await requestJson(SPREAD_SOURCE_URLS.cointradeRates, {
     ...options,
     method: "POST",
-    headers: { "content-type": "application/json;charset=UTF-8" },
+    headers: {
+      ...BROWSER_JSON_HEADERS,
+      "content-type": "application/json;charset=UTF-8",
+      origin: "https://coin-trade.cc",
+      referer: "https://coin-trade.cc/",
+      "sec-fetch-site": "cross-site",
+    },
     body: JSON.stringify({
       event: "priceFeedList",
       data: { productIds },

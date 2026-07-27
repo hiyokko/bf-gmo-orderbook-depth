@@ -2,7 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { postToSlack } from "./slack.mjs";
 import { createSpreadComparison } from "./spread-comparison.mjs";
-import { createSpreadSlackText } from "./spread-slack.mjs";
+import {
+  createSpreadSlackMessages,
+  createSpreadSlackText,
+} from "./spread-slack.mjs";
 import { collectSpreadSources } from "./spread-sources.mjs";
 
 export async function runSpreadComparison({
@@ -20,18 +23,23 @@ export async function runSpreadComparison({
 
   const collected = await collectImpl({ fetchImpl });
   const comparison = createSpreadComparison(collected);
+  const slackMessages = createSpreadSlackMessages(comparison, collected.errors);
   const slackText = createSpreadSlackText(comparison, collected.errors);
   const slack = {
     requested: !dryRun,
     posted: false,
     response: null,
+    messageCount: slackMessages.length,
     error: null,
   };
 
   let postError = null;
   if (!dryRun) {
     try {
-      slack.response = await postToSlack(slackText, webhookUrl, { fetchImpl });
+      slack.response = [];
+      for (const message of slackMessages) {
+        slack.response.push(await postToSlack(message, webhookUrl, { fetchImpl }));
+      }
       slack.posted = true;
     } catch (error) {
       postError = error instanceof Error ? error : new Error(String(error));
@@ -55,7 +63,7 @@ export async function runSpreadComparison({
   await saveJson(report, outputPath);
   if (postError) throw postError;
 
-  return { report, slackText, outputPath };
+  return { report, slackText, slackMessages, outputPath };
 }
 
 async function saveJson(report, outputPath) {

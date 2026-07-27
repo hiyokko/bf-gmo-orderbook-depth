@@ -39,6 +39,8 @@ These instructions apply to the repository root and all descendants.
   percentage as `(ask - bid) / mid * 100`.
 - Never substitute exchange-orderbook prices, mids, last prices, or inferred
   values for an unavailable dealer two-way quote. Display such cells as `-`.
+- Post each of the four spread-comparison tables as an independent Slack
+  message below 4,000 characters so Slack cannot split a code fence.
 - Keep the spread-comparison schedule and its watchdog separate from the
   orderbook-depth workflow so either report can recover independently.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.

@@ -5,6 +5,10 @@ const STATUS_TEXT = Object.freeze({
 });
 
 export function createSpreadSlackText(comparison, errors = {}) {
+  return createSpreadSlackMessages(comparison, errors).join("\n\n");
+}
+
+export function createSpreadSlackMessages(comparison, errors = {}) {
   const sections = [
     formatSection("現物スプレッド", comparison?.spot, "spread"),
     formatSection("現物スプレッド（%）", comparison?.spot, "spreadPercent"),
@@ -13,18 +17,30 @@ export function createSpreadSlackText(comparison, errors = {}) {
   ];
   const errorLines = formatErrorLines(errors);
   const hasError = hasErrorCells(comparison);
-
-  return [
-    "*暗号資産 販売所スプレッド比較*",
-    "spread = 買値（ask）- 売値（bid）",
-    "",
-    ...joinWithBlankLine(sections),
-    "",
+  const legend = [
     hasError
       ? "`-` = 対象外または公式公開レートなし / `ERR` = 取得・応答エラー"
       : "`-` = 対象外または公式公開レートなし",
     ...(errorLines.length > 0 ? ["", "*取得エラー*", ...errorLines] : []),
   ].join("\n");
+  const messages = sections.map((section, index) => [
+    ...(index === 0
+      ? [
+          "*暗号資産 販売所スプレッド比較*",
+          "spread = 買値（ask）- 売値（bid）",
+          "",
+        ]
+      : []),
+    section,
+    ...(index === sections.length - 1 ? ["", legend] : []),
+  ].join("\n"));
+
+  for (const message of messages) {
+    if (message.length > 4_000) {
+      throw new Error(`Slack spread section exceeds 4,000 characters (${message.length})`);
+    }
+  }
+  return messages;
 }
 
 export function formatSpreadNumber(value) {
@@ -87,10 +103,6 @@ function hasErrorCells(comparison) {
       )
     ))
   ));
-}
-
-function joinWithBlankLine(items) {
-  return items.flatMap((item, index) => (index === 0 ? [item] : ["", item]));
 }
 
 function padStart(value, width) {
