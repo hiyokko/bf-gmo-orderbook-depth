@@ -25,6 +25,13 @@ async function main() {
   console.log(`Snapshot saved: ${result.outputPath}`);
   console.log(`SBIVC spot symbols: ${result.report.listings.spot.length}`);
   console.log(`SBIVC leverage symbols: ${result.report.listings.leverage.length}`);
+  const sourceErrors = Object.entries(result.report.errors)
+    .flatMap(([market, venues]) => Object.entries(venues)
+      .filter(([, message]) => Boolean(message))
+      .map(([venue, message]) => `${market}/${venue}: ${message}`));
+  if (sourceErrors.length > 0) {
+    console.warn(`Source errors: ${sourceErrors.join(" | ")}`);
+  }
   console.log(
     options.dryRun
       ? "Slack: dry-run (not posted)"

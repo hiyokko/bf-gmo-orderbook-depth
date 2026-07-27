@@ -49,6 +49,8 @@ const GMO_LEVERAGE_PRODUCT_IDS = Object.freeze({
   10022: "DOGE",
   10023: "SOL",
 });
+const MAX_REQUEST_ATTEMPTS = 3;
+const INITIAL_RETRY_DELAY_MS = 250;
 
 export async function collectSpreadSources({
   fetchImpl = globalThis.fetch,
@@ -353,18 +355,34 @@ async function request(url, {
   ...options
 } = {}) {
   validateFetch(fetchImpl);
-  const response = await fetchImpl(url, {
-    ...options,
-    headers: {
-      "user-agent": RUNTIME_DEFAULTS.userAgent,
-      ...headers,
-    },
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  if (!response?.ok) {
-    throw new Error(`Price source request failed: HTTP ${response?.status ?? "unknown"}`);
+
+  for (let attempt = 1; attempt <= MAX_REQUEST_ATTEMPTS; attempt += 1) {
+    let response;
+    try {
+      response = await fetchImpl(url, {
+        ...options,
+        headers: {
+          "user-agent": RUNTIME_DEFAULTS.userAgent,
+          ...headers,
+        },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (error) {
+      if (attempt === MAX_REQUEST_ATTEMPTS) throw error;
+      await retryDelay(attempt);
+      continue;
+    }
+
+    if (response?.ok) return response;
+    const status = Number(response?.status);
+    const retryable = status === 408 || status === 429 || status >= 500;
+    if (!retryable || attempt === MAX_REQUEST_ATTEMPTS) {
+      throw new Error(`Price source request failed: HTTP ${response?.status ?? "unknown"}`);
+    }
+    await retryDelay(attempt);
   }
-  return response;
+
+  throw new Error("Price source request failed after retries");
 }
 
 function symbolsFromFirstTableAfter(html, heading) {
@@ -432,6 +450,11 @@ function publicErrorMessage(error) {
 
 function validateFetch(fetchImpl) {
   if (typeof fetchImpl !== "function") throw new Error("Fetch API is unavailable");
+}
+
+function retryDelay(attempt) {
+  const delayMs = INITIAL_RETRY_DELAY_MS * 2 ** (attempt - 1);
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
 function requireQuotes(quotes, sourceName) {

@@ -32,6 +32,7 @@ test("spread application saves a dry-run report without posting", async () => {
     assert.deepEqual(saved.listings.spot, ["BTC", "POL"]);
     assert.match(result.slackText, /POL/);
     assert.doesNotMatch(result.slackText, /取得時刻|API応答時刻/);
+    assert.doesNotMatch(result.slackText, /ERR/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

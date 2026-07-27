@@ -12,6 +12,7 @@ export function createSpreadSlackText(comparison, errors = {}) {
     formatSection("レバレッジスプレッド（%）", comparison?.leverage, "spreadPercent"),
   ];
   const errorLines = formatErrorLines(errors);
+  const hasError = hasErrorCells(comparison);
 
   return [
     "*暗号資産 販売所スプレッド比較*",
@@ -19,7 +20,9 @@ export function createSpreadSlackText(comparison, errors = {}) {
     "",
     ...joinWithBlankLine(sections),
     "",
-    "`-` = 対象外または公式公開レートなし / `ERR` = 取得・応答エラー",
+    hasError
+      ? "`-` = 対象外または公式公開レートなし / `ERR` = 取得・応答エラー"
+      : "`-` = 対象外または公式公開レートなし",
     ...(errorLines.length > 0 ? ["", "*取得エラー*", ...errorLines] : []),
   ].join("\n");
 }
@@ -74,6 +77,16 @@ function formatErrorLines(errors) {
     }
   }
   return lines;
+}
+
+function hasErrorCells(comparison) {
+  return ["spot", "leverage"].some((market) => (
+    comparison?.[market]?.rows?.some((row) => (
+      Object.values(row.cells || {}).some(
+        (cell) => cell?.status === "error" || cell?.status === "invalid",
+      )
+    ))
+  ));
 }
 
 function joinWithBlankLine(items) {
