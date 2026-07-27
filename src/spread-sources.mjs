@@ -314,7 +314,13 @@ async function fetchCoincheck(options) {
 
 async function fetchBitpoint(options) {
   return requireQuotes(
-    parseBitpointRates(await requestJson(SPREAD_SOURCE_URLS.bitpoint, options)),
+    parseBitpointRates(await requestJson(SPREAD_SOURCE_URLS.bitpoint, {
+      ...options,
+      headers: {
+        accept: "application/json",
+        referer: "https://www.bitpoint.co.jp/chart/price-list/",
+      },
+    })),
     "BITPOINT",
   );
 }
