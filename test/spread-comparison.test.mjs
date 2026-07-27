@@ -76,7 +76,8 @@ test("Slack output contains all four aligned comparison tables", () => {
   assert.match(text, /\*レバレッジスプレッド\*/);
   assert.match(text, /\*レバレッジスプレッド（%）\*/);
   assert.match(text, /100,000/);
-  assert.match(text, /0\.9950%/);
+  assert.match(text, /1\.00%/);
+  assert.match(text, /0\.1000%/);
   assert.match(text, /JPYSC/);
   assert.match(text, /ERR/);
   assert.match(text, /取得エラー/);

@@ -42,6 +42,8 @@ These instructions apply to the repository root and all descendants.
   bb, CT, OKJ. Display leverage columns in this order: SBI VC, bF, GMO.
 - Calculate dealer spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
   percentage as `(ask - bid) / mid * 100`.
+- Display spot spread percentages with two decimal places. Keep leverage spread
+  percentages at four decimal places.
 - Never substitute exchange-orderbook prices, mids, last prices, or inferred
   values for an unavailable dealer two-way quote. Display such cells as `-`.
 - Post each of the four spread-comparison tables as an independent Slack

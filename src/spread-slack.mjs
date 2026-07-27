@@ -11,7 +11,12 @@ export function createSpreadSlackText(comparison, errors = {}) {
 export function createSpreadSlackMessages(comparison, errors = {}) {
   const sections = [
     formatSection("現物スプレッド", comparison?.spot, "spread"),
-    formatSection("現物スプレッド（%）", comparison?.spot, "spreadPercent"),
+    formatSection(
+      "現物スプレッド（%）",
+      comparison?.spot,
+      "spreadPercent",
+      { percentDigits: 2 },
+    ),
     formatSection("レバレッジスプレッド", comparison?.leverage, "spread"),
     formatSection("レバレッジスプレッド（%）", comparison?.leverage, "spreadPercent"),
   ];
@@ -55,14 +60,16 @@ export function formatSpreadNumber(value) {
   }).format(value);
 }
 
-function formatSection(title, market, metric) {
+function formatSection(title, market, metric, options = {}) {
   if (!market || !Array.isArray(market.venues) || !Array.isArray(market.rows)) {
     throw new Error(`Comparison section is missing: ${title}`);
   }
   const headers = ["symbol", ...market.venues.map((venue) => venue.label)];
   const values = market.rows.map((row) => [
     row.symbol,
-    ...market.venues.map((venue) => formatCell(row.cells?.[venue.id], metric)),
+    ...market.venues.map(
+      (venue) => formatCell(row.cells?.[venue.id], metric, options),
+    ),
   ]);
   const widths = headers.map((header, index) => Math.max(
     header.length,
@@ -79,9 +86,11 @@ function formatSection(title, market, metric) {
   return [`*${title}*`, "```", ...lines, "```"].join("\n");
 }
 
-function formatCell(cell, metric) {
+function formatCell(cell, metric, { percentDigits = 4 } = {}) {
   if (cell?.status !== "ok") return STATUS_TEXT[cell?.status] || "ERR";
-  if (metric === "spreadPercent") return `${cell.spreadPercent.toFixed(4)}%`;
+  if (metric === "spreadPercent") {
+    return `${cell.spreadPercent.toFixed(percentDigits)}%`;
+  }
   return formatSpreadNumber(cell.spread);
 }
 

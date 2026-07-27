@@ -47,6 +47,8 @@ Excelの `CompareSheets` と同じ定義で、次の4表を出力します。
 
 計算式は `spread = ask - bid`、`mid = (ask + bid) / 2`、
 `spread % = spread / mid * 100` です。
+現物スプレッド（%）は小数点以下2桁、レバレッジスプレッド（%）は
+小数点以下4桁で表示します。
 
 比較行は実行時に
 [SBIVC公式サービス概要](https://www.sbivc.co.jp/services/service-overview)
