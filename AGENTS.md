@@ -29,9 +29,21 @@ These instructions apply to the repository root and all descendants.
 - Separate the bitFlyer and GMO Coin Slack blocks with one blank line.
 - Keep the GitHub Actions schedule at JST 01:00, 09:00, and 17:00 daily, representing the requested 09:00, 17:00, and 25:00 cycle.
 - Keep the watchdog recovery window at 20–360 minutes after the latest scheduled slot, and do not treat ordinary manual runs as slot completion.
+- Build spread-comparison rows from the current `現物（販売所）` and
+  `レバレッジ（販売所）` tables on the official SBIVC service-overview page at
+  runtime. Do not fall back to a stale hard-coded symbol list when the official
+  listing page cannot be parsed.
+- Display spot dealer-spread columns in this order: SBI VC, bF, CC, BP, GMO,
+  bb, CT, OKJ. Display leverage columns in this order: SBI VC, bF, GMO.
+- Calculate dealer spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
+  percentage as `(ask - bid) / mid * 100`.
+- Never substitute exchange-orderbook prices, mids, last prices, or inferred
+  values for an unavailable dealer two-way quote. Display such cells as `-`.
+- Keep the spread-comparison schedule and its watchdog separate from the
+  orderbook-depth workflow so either report can recover independently.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
-- Run `npm test` and `npm run dry-run` after code or workflow changes.
+- Run `npm test`, `npm run dry-run`, and `npm run spread:dry-run` after code or workflow changes.
 
 ## Public-repository security
 
@@ -40,7 +52,7 @@ These instructions apply to the repository root and all descendants.
 - Never print, commit, upload, document, or place the Webhook URL in workflow inputs.
 - Never trigger a secret-bearing workflow from pull requests or untrusted code.
 - Give `GITHUB_TOKEN` read-only contents permission.
-- Limit `actions: write` to the watchdog workflow that dispatches the primary workflow.
+- Limit `actions: write` to watchdog workflows that dispatch their primary workflow.
 - Pin every referenced GitHub Action to a full-length commit SHA.
 - Pass the Slack secret only to the single step that posts to Slack.
-- Never pass the Slack secret to the watchdog workflow.
+- Never pass the Slack secret to watchdog workflows.

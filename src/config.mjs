@@ -14,6 +14,25 @@ export const ORDERBOOK_SCHEDULE = Object.freeze({
 
 export const WORKFLOWS = Object.freeze({
   orderbook: "orderbook-depth.yml",
+  spreadComparison: "spread-comparison.yml",
+});
+
+export const SPREAD_MARKETS = Object.freeze({
+  spot: Object.freeze([
+    Object.freeze({ id: "sbivc", label: "SBI VC" }),
+    Object.freeze({ id: "bf", label: "bF" }),
+    Object.freeze({ id: "cc", label: "CC" }),
+    Object.freeze({ id: "bp", label: "BP" }),
+    Object.freeze({ id: "gmo", label: "GMO" }),
+    Object.freeze({ id: "bb", label: "bb" }),
+    Object.freeze({ id: "ct", label: "CT" }),
+    Object.freeze({ id: "okj", label: "OKJ" }),
+  ]),
+  leverage: Object.freeze([
+    Object.freeze({ id: "sbivc", label: "SBI VC" }),
+    Object.freeze({ id: "bf", label: "bF" }),
+    Object.freeze({ id: "gmo", label: "GMO" }),
+  ]),
 });
 
 export const RUNTIME_DEFAULTS = Object.freeze({

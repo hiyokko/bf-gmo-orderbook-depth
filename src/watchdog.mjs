@@ -16,6 +16,8 @@ const ACTIVE_RUN_STATUSES = new Set([
 
 export const WATCHDOG_TITLE_PREFIX = "Orderbook depth watchdog ";
 export const ORDERBOOK_WORKFLOW = WORKFLOWS.orderbook;
+export const SPREAD_WATCHDOG_TITLE_PREFIX = "Spread comparison watchdog ";
+export const SPREAD_COMPARISON_WORKFLOW = WORKFLOWS.spreadComparison;
 
 export function latestScheduleTarget(now = Date.now()) {
   const nowMs = finiteTimestamp(now);
@@ -88,8 +90,10 @@ export function resolveRunTarget({
   return null;
 }
 
-export function watchdogRunTitle(target) {
-  return `${WATCHDOG_TITLE_PREFIX}${target.executionBoundaryAt}`;
+export function watchdogRunTitle(target, {
+  titlePrefix = WATCHDOG_TITLE_PREFIX,
+} = {}) {
+  return `${titlePrefix}${target.executionBoundaryAt}`;
 }
 
 export function workflowDispatchInputs(target) {
@@ -101,11 +105,12 @@ export function workflowDispatchInputs(target) {
 
 export function classifyTargetRuns(runs = [], target, {
   currentRunId = "",
+  titlePrefix = WATCHDOG_TITLE_PREFIX,
 } = {}) {
   const currentId = String(currentRunId || "");
   const relevant = runs
     .filter((run) => String(run?.id ?? "") !== currentId)
-    .filter((run) => runMatchesTarget(run, target))
+    .filter((run) => runMatchesTarget(run, target, titlePrefix))
     .sort((left, right) => runTimestamp(right) - runTimestamp(left));
 
   return {
@@ -160,11 +165,11 @@ function formatJstBoundary(boundaryMs) {
   return `${year}-${month}-${day} ${hour}:00 JST`;
 }
 
-function runMatchesTarget(run, target) {
+function runMatchesTarget(run, target, titlePrefix) {
   if (!run || !target) return false;
   if (
     run.event === "workflow_dispatch"
-    && run.display_title === watchdogRunTitle(target)
+    && run.display_title === watchdogRunTitle(target, { titlePrefix })
   ) {
     return true;
   }

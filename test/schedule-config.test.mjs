@@ -36,3 +36,30 @@ test("watchdog can dispatch recovery runs without receiving the Slack secret", a
   assert.ok(actionReferences.length >= 2);
   assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
 });
+
+test("spread comparison workflows use the same JST slots and protect the Slack secret", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/spread-comparison.yml", import.meta.url),
+    "utf8",
+  );
+  const watchdog = await readFile(
+    new URL("../.github/workflows/spread-comparison-watchdog.yml", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(workflow, /cron: "0 1,9,17 \* \* \*"/);
+  assert.match(workflow, /timezone: "Asia\/Tokyo"/);
+  assert.match(workflow, /permissions:\n  actions: read\n  contents: read/);
+  assert.match(workflow, /SLACK_WEBHOOK_URL: \$\{\{ secrets\.SLACK_WEBHOOK_URL \}\}/);
+  assert.doesNotMatch(workflow, /pull_request:|push:/);
+
+  assert.match(watchdog, /timezone: "Asia\/Tokyo"/);
+  assert.match(watchdog, /permissions:\n  actions: write\n  contents: read/);
+  assert.doesNotMatch(watchdog, /SLACK_WEBHOOK_URL|pull_request:|push:/);
+
+  for (const contents of [workflow, watchdog]) {
+    const actionReferences = [...contents.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
+    assert.ok(actionReferences.length >= 2);
+    assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
+  }
+});

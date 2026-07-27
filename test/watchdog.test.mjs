@@ -166,3 +166,31 @@ test("watchdog rejects timestamps outside configured schedule boundaries", () =>
     /must match a configured JST/,
   );
 });
+
+test("classification can use an independent spread watchdog title", () => {
+  const target = parseWatchdogTarget("2026-07-23T08:00:00.000Z");
+  const result = classifyTargetRuns([
+    {
+      id: 1,
+      event: "workflow_dispatch",
+      display_title: watchdogRunTitle(target),
+      status: "completed",
+      conclusion: "success",
+      created_at: "2026-07-23T08:27:00.000Z",
+    },
+    {
+      id: 2,
+      event: "workflow_dispatch",
+      display_title: watchdogRunTitle(target, {
+        titlePrefix: "Spread comparison watchdog ",
+      }),
+      status: "completed",
+      conclusion: "success",
+      created_at: "2026-07-23T08:29:00.000Z",
+    },
+  ], target, {
+    titlePrefix: "Spread comparison watchdog ",
+  });
+
+  assert.deepEqual(result.successful.map((run) => run.id), [2]);
+});

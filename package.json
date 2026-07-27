@@ -7,7 +7,10 @@
     "start": "node scripts/run-orderbook-depth.mjs",
     "test": "node --test",
     "dry-run": "node scripts/run-orderbook-depth.mjs --dry-run",
-    "watchdog": "node scripts/run-watchdog.mjs"
+    "watchdog": "node scripts/run-watchdog.mjs",
+    "spread": "node scripts/run-spread-comparison.mjs",
+    "spread:dry-run": "node scripts/run-spread-comparison.mjs --dry-run",
+    "spread:watchdog": "node scripts/run-spread-watchdog.mjs"
   },
   "engines": {
     "node": ">=24"
