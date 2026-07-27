@@ -38,7 +38,7 @@ These instructions apply to the repository root and all descendants.
   Do not use the BTC-only Echo API for the multi-asset comparison.
 - Fetch BITPOINT dealer quotes from the official public
   `pricedata/twoway/normal-price.json` feed and normalize `LNK` to `LINK`.
-- Display spot dealer-spread columns in this order: SBI VC, bF, CC, BP, GMO,
+- Display spot dealer-spread columns in this order: SBI VC, BPJ, bF, CC, GMO,
   bb, CT, OKJ. Display leverage columns in this order: SBI VC, bF, GMO.
 - Calculate dealer spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
   percentage as `(ask - bid) / mid * 100`.
