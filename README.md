@@ -8,7 +8,7 @@
 - bitFlyer Crypto CFD (`FX_BTC_JPY`) とGMOコインのレバレッジBTC
   (`BTC_JPY`) の0.1 / 0.3 / 0.5 / 1 / 3 BTC板Depth
 - SBIVCの現在取扱銘柄を基準にしたスプレッド比較
-  - 現物: SBI VC / bF / CC / GMO / bb / OKJ
+  - 現物: SBI VC / bb / bF / CC / GMO / OKJ
   - レバレッジ: SBI VC / bF / GMO / SBI FX / RW / FXTF
 
 ## 実行スケジュール

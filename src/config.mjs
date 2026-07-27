@@ -20,10 +20,10 @@ export const WORKFLOWS = Object.freeze({
 export const SPREAD_MARKETS = Object.freeze({
   spot: Object.freeze([
     Object.freeze({ id: "sbivc", label: "SBI VC" }),
+    Object.freeze({ id: "bb", label: "bb" }),
     Object.freeze({ id: "bf", label: "bF" }),
     Object.freeze({ id: "cc", label: "CC" }),
     Object.freeze({ id: "gmo", label: "GMO" }),
-    Object.freeze({ id: "bb", label: "bb" }),
     Object.freeze({ id: "okj", label: "OKJ" }),
   ]),
   leverage: Object.freeze([

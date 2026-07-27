@@ -36,7 +36,7 @@ These instructions apply to the repository root and all descendants.
 - Fetch bitFlyer spot dealer quotes for each current SBIVC symbol from the
   official Buy/Sell page's unauthenticated `api/app/market/price2` endpoint.
   Do not use the BTC-only Echo API for the multi-asset comparison.
-- Display spot dealer-spread columns in this order: SBI VC, bF, CC, GMO, bb,
+- Display spot dealer-spread columns in this order: SBI VC, bb, bF, CC, GMO,
   OKJ. Do not display BPJ or CT columns. Display leverage columns in this
   order: SBI VC, bF, GMO, SBI FX, RW, FXTF.
 - Use best bid/ask for leverage exchange orderbooks (GMO and Rakuten Wallet)
