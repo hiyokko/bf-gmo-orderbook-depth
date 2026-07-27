@@ -38,15 +38,23 @@ These instructions apply to the repository root and all descendants.
   Do not use the BTC-only Echo API for the multi-asset comparison.
 - Display spot dealer-spread columns in this order: SBI VC, bF, CC, GMO, bb,
   OKJ. Do not display BPJ or CT columns. Display leverage columns in this
-  order: SBI VC, bF, GMO.
-- Calculate dealer spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
+  order: SBI VC, bF, GMO, SBI FX, RW, FXTF.
+- Use best bid/ask for leverage exchange orderbooks (GMO and Rakuten Wallet)
+  and the official two-way dealer quotes for leverage OTC/CFD venues.
+- Discover enabled personal JPY CFD products from Rakuten Wallet's public
+  symbol endpoint at runtime, respect its 200 ms public-API interval, and fetch
+  each matching SBIVC leverage symbol's best bid/ask from its orderbook.
+- Fetch SBI FX Trade's BTC/JPY, XRP/JPY, and ETH/JPY quotes from the official
+  public website feed, and FXTF's BTC/JPY and ETH/JPY quotes from the official
+  public real-time-rate feed.
+- Calculate spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
   percentage as `(ask - bid) / mid * 100`.
 - Display spot spread percentages with two decimal places. Keep leverage spread
   percentages at four decimal places.
 - In Slack, place one blank line between the spread-comparison title and the
   first table. Do not display a separate spread-formula caption.
-- Never substitute exchange-orderbook prices, mids, last prices, or inferred
-  values for an unavailable dealer two-way quote. Display such cells as `-`.
+- Never substitute mids, last prices, or inferred values for an unavailable
+  two-way quote. Display such cells as `-`.
 - Post each of the four spread-comparison tables as an independent Slack
   message below 4,000 characters so Slack cannot split a code fence.
 - Keep the spread-comparison schedule and its watchdog separate from the

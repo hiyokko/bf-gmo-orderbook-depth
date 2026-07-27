@@ -9,6 +9,10 @@ export const SPREAD_SOURCE_URLS = Object.freeze({
   gmo: "https://coin.z.com/api/v1/master/getCurrentRate.json",
   bitbank: "https://public.bitbank.cc/dealer/feed",
   okj: "https://www.okj.com/v2/asset/transaction/public/currencies?checkOnline=true&dynamicQuotePrecision=true",
+  sbifx: "https://trade.sbifxt.co.jp/api_crypto/HttpApi/Rate.aspx",
+  rakutenSymbols: "https://exchange.rakuten-wallet.co.jp/api/v1/cfd/symbol?authority=PERSONAL",
+  rakutenOrderbook: "https://exchange.rakuten-wallet.co.jp/api/v1/orderbook",
+  fxtf: "https://api.fxtrade.co.jp/live/getrategx",
 });
 
 const GMO_SPOT_PRODUCT_IDS = Object.freeze({
@@ -49,6 +53,8 @@ const GMO_LEVERAGE_PRODUCT_IDS = Object.freeze({
 const MAX_REQUEST_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY_MS = 250;
 const BITFLYER_SPOT_BATCH_SIZE = 6;
+const RAKUTEN_REQUEST_INTERVAL_MS = 210;
+const SBIFX_LEVERAGE_SYMBOLS = Object.freeze(["BTC", "XRP", "ETH"]);
 
 export async function collectSpreadSources({
   fetchImpl = globalThis.fetch,
@@ -109,6 +115,37 @@ export async function collectSpreadSources({
       venues: ["okj"],
       run: async () => ({
         spot: { okj: await fetchOkj({ fetchImpl, timeoutMs }) },
+      }),
+    },
+    {
+      markets: ["leverage"],
+      venues: ["sbifx"],
+      run: async () => ({
+        leverage: {
+          sbifx: await fetchSbifxLeverage(listings.leverage, {
+            fetchImpl,
+            timeoutMs,
+          }),
+        },
+      }),
+    },
+    {
+      markets: ["leverage"],
+      venues: ["rw"],
+      run: async () => ({
+        leverage: {
+          rw: await fetchRakutenLeverage(listings.leverage, {
+            fetchImpl,
+            timeoutMs,
+          }),
+        },
+      }),
+    },
+    {
+      markets: ["leverage"],
+      venues: ["fxtf"],
+      run: async () => ({
+        leverage: { fxtf: await fetchFxtfLeverage({ fetchImpl, timeoutMs }) },
       }),
     },
   ];
@@ -212,6 +249,65 @@ export function parseOkjRates(body) {
   return quotes;
 }
 
+export function parseSbifxRate(body, expectedSymbol) {
+  const symbol = String(expectedSymbol || "").trim().toUpperCase();
+  if (!SBIFX_LEVERAGE_SYMBOLS.includes(symbol)) return {};
+
+  const row = String(body || "")
+    .split(/\r?\n/)
+    .find((line) => line.startsWith(`${symbol}JPY\t`));
+  if (!row) return {};
+
+  const fields = row.split("\t");
+  const quotes = {};
+  assignQuote(quotes, symbol, fields[4], fields[5]);
+  return quotes;
+}
+
+export function parseRakutenSymbols(body) {
+  const products = new Map();
+  for (const row of Array.isArray(body) ? body : []) {
+    const symbol = String(row?.baseCurrency || "").trim().toUpperCase();
+    const id = Number(row?.id);
+    if (
+      row?.authority !== "PERSONAL"
+      || row?.tradeType !== "CFD"
+      || row?.quoteCurrency !== "JPY"
+      || row?.enabled !== true
+      || row?.closeOnly === true
+      || row?.viewOnly === true
+      || !/^[A-Z][A-Z0-9]{1,15}$/.test(symbol)
+      || !Number.isSafeInteger(id)
+      || id <= 0
+    ) {
+      continue;
+    }
+    products.set(symbol, id);
+  }
+  return products;
+}
+
+export function parseRakutenOrderbook(body) {
+  const bids = validPrices(body?.bids);
+  const asks = validPrices(body?.asks);
+  return quoteFrom(
+    body?.bestBid ?? (bids.length > 0 ? Math.max(...bids) : null),
+    body?.bestAsk ?? (asks.length > 0 ? Math.min(...asks) : null),
+  );
+}
+
+export function parseFxtfRates(body) {
+  const quotes = {};
+  for (const item of body?.feed || []) {
+    const match = /^([A-Z0-9]+)JPY_CFD$/.exec(
+      String(item?.data?.symbol || "").toUpperCase(),
+    );
+    if (!match) continue;
+    assignQuote(quotes, match[1], item?.data?.bid, item?.data?.ask);
+  }
+  return quotes;
+}
+
 async function fetchSbivcQuotes(options) {
   const parsed = parseSbivcRates(
     await requestJson(SPREAD_SOURCE_URLS.sbivcRates, options),
@@ -296,6 +392,70 @@ async function fetchOkj(options) {
   return requireQuotes(parseOkjRates(body), "OKJ");
 }
 
+export async function fetchSbifxLeverage(targetSymbols, options) {
+  const targets = normalizedTargetSymbols(targetSymbols)
+    .filter((symbol) => SBIFX_LEVERAGE_SYMBOLS.includes(symbol));
+  const results = await Promise.allSettled(targets.map(async (symbol) => {
+    const body = await requestText(SPREAD_SOURCE_URLS.sbifx, {
+      ...options,
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        origin: "https://www.sbifxt.co.jp",
+        referer: "https://www.sbifxt.co.jp/",
+      },
+      body: new URLSearchParams({
+        CURID: `${symbol}JPY`,
+        AMOUNT: "1",
+        GUID: "SBIFXTHP",
+      }).toString(),
+    });
+    return parseSbifxRate(body, symbol);
+  }));
+
+  const quotes = {};
+  for (const result of results) {
+    if (result.status === "fulfilled") Object.assign(quotes, result.value);
+  }
+  return requireQuotes(quotes, "SBI FX leverage");
+}
+
+export async function fetchRakutenLeverage(targetSymbols, {
+  requestIntervalMs = RAKUTEN_REQUEST_INTERVAL_MS,
+  ...options
+} = {}) {
+  const products = parseRakutenSymbols(
+    await requestJson(SPREAD_SOURCE_URLS.rakutenSymbols, options),
+  );
+  const targets = normalizedTargetSymbols(targetSymbols)
+    .filter((symbol) => products.has(symbol));
+  const quotes = {};
+
+  for (const [index, symbol] of targets.entries()) {
+    if (index > 0 && requestIntervalMs > 0) {
+      await delay(requestIntervalMs);
+    }
+    const url = new URL(SPREAD_SOURCE_URLS.rakutenOrderbook);
+    url.searchParams.set("symbolId", String(products.get(symbol)));
+    const quote = parseRakutenOrderbook(await requestJson(url.toString(), options));
+    if (quote) quotes[symbol] = quote;
+  }
+
+  return requireQuotes(quotes, "Rakuten Wallet leverage");
+}
+
+export async function fetchFxtfLeverage(options) {
+  const body = await requestJson(SPREAD_SOURCE_URLS.fxtf, {
+    ...options,
+    headers: {
+      accept: "application/json",
+      origin: "https://www.fxtrade.co.jp",
+      referer: "https://www.fxtrade.co.jp/crypto/rate/",
+    },
+  });
+  return requireQuotes(parseFxtfRates(body), "FXTF leverage");
+}
+
 async function requestJson(url, options = {}) {
   const response = await request(url, options);
   if (typeof response.json === "function") return response.json();
@@ -377,6 +537,14 @@ function assignQuote(quotes, symbol, bid, ask) {
   if (quote) quotes[symbol] = quote;
 }
 
+function normalizedTargetSymbols(targetSymbols) {
+  return [...new Set(
+    (Array.isArray(targetSymbols) ? targetSymbols : [])
+      .map((symbol) => String(symbol).trim().toUpperCase())
+      .filter((symbol) => /^[A-Z][A-Z0-9]{1,15}$/.test(symbol)),
+  )];
+}
+
 function quoteFrom(bid, ask) {
   const parsedBid = parseNumber(bid);
   const parsedAsk = parseNumber(ask);
@@ -416,9 +584,13 @@ function retryDelay(attempt) {
   return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
+function delay(delayMs) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
 function requireQuotes(quotes, sourceName) {
   if (!quotes || Object.keys(quotes).length === 0) {
-    throw new Error(`${sourceName} did not return any valid dealer quotes`);
+    throw new Error(`${sourceName} did not return any valid two-way quotes`);
   }
   return quotes;
 }

@@ -49,6 +49,10 @@ test("comparison follows the current SBIVC listing and distinguishes unavailable
   assert.equal(comparison.spot.rows[1].cells.bf.status, "unavailable");
   assert.equal(comparison.spot.rows[2].cells.cc.status, "error");
   assert.deepEqual(comparison.leverage.rows.map((row) => row.symbol), ["BTC", "DAI"]);
+  assert.deepEqual(
+    comparison.leverage.venues.map((venue) => venue.label),
+    ["SBI VC", "bF", "GMO", "SBI FX", "RW", "FXTF"],
+  );
 });
 
 test("Slack output contains all four aligned comparison tables", () => {
@@ -104,7 +108,7 @@ test("Slack output contains all four aligned comparison tables", () => {
   assert.equal(messages.length, 4);
   assert.match(
     messages[0],
-    /^\*暗号資産 販売所スプレッド比較\*\n\n\*現物スプレッド\*/,
+    /^\*暗号資産 スプレッド比較\*\n\n\*現物スプレッド\*/,
   );
   assert.ok(messages.every((message) => message.length < 4_000));
   assert.ok(messages.every((message) => (message.match(/```/g) || []).length === 2));

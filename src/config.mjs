@@ -30,6 +30,9 @@ export const SPREAD_MARKETS = Object.freeze({
     Object.freeze({ id: "sbivc", label: "SBI VC" }),
     Object.freeze({ id: "bf", label: "bF" }),
     Object.freeze({ id: "gmo", label: "GMO" }),
+    Object.freeze({ id: "sbifx", label: "SBI FX" }),
+    Object.freeze({ id: "rw", label: "RW" }),
+    Object.freeze({ id: "fxtf", label: "FXTF" }),
   ]),
 });
 

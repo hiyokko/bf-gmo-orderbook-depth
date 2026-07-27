@@ -2,13 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   fetchBitflyerSpot,
+  fetchRakutenLeverage,
+  fetchSbifxLeverage,
   parseBitbankRates,
   parseBitflyerSpotRate,
   parseCoincheckRates,
+  parseFxtfRates,
   parseGmoRates,
   parseOkjRates,
+  parseRakutenOrderbook,
+  parseRakutenSymbols,
   parseSbivcListings,
   parseSbivcRates,
+  parseSbifxRate,
 } from "../src/spread-sources.mjs";
 
 test("SBIVC listings use the first dealer tables and preserve their current order", () => {
@@ -149,4 +155,166 @@ test("GMO parser separates spot and leverage products", () => {
   });
   assert.deepEqual(gmo.spot.gmo.BTC, { bid: 100, ask: 102 });
   assert.deepEqual(gmo.leverage.gmo.BTC, { bid: 101, ask: 103 });
+});
+
+test("SBI FX parser extracts the official website two-way CFD quote", () => {
+  const body = [
+    "RATE\t0\t20260727175801",
+    "1",
+    "BTCJPY\tBitcoin/JPY\t10647832\t10652832\t10647832\t10652832\t51428",
+  ].join("\n");
+
+  assert.deepEqual(parseSbifxRate(body, "BTC"), {
+    BTC: { bid: 10_647_832, ask: 10_652_832 },
+  });
+  assert.deepEqual(parseSbifxRate(body, "SOL"), {});
+});
+
+test("SBI FX fetch requests only supported SBIVC leverage symbols", async () => {
+  const requestedSymbols = [];
+  const quotes = await fetchSbifxLeverage(["BTC", "SOL", "ETH"], {
+    fetchImpl: async (_url, options) => {
+      const symbol = new URLSearchParams(options.body).get("CURID").slice(0, -3);
+      requestedSymbols.push(symbol);
+      return {
+        ok: true,
+        status: 200,
+        text: async () => [
+          "RATE\t0\t20260727175801",
+          "1",
+          `${symbol}JPY\tname\t100\t102\t100\t102`,
+        ].join("\n"),
+      };
+    },
+  });
+
+  assert.deepEqual(requestedSymbols, ["BTC", "ETH"]);
+  assert.deepEqual(quotes, {
+    BTC: { bid: 100, ask: 102 },
+    ETH: { bid: 100, ask: 102 },
+  });
+});
+
+test("Rakuten parsers accept only enabled personal JPY CFD products and best prices", () => {
+  const products = parseRakutenSymbols([
+    {
+      id: 7,
+      authority: "PERSONAL",
+      baseCurrency: "BTC",
+      quoteCurrency: "JPY",
+      tradeType: "CFD",
+      enabled: true,
+      closeOnly: false,
+      viewOnly: false,
+    },
+    {
+      id: 8,
+      authority: "PERSONAL",
+      baseCurrency: "ETH",
+      quoteCurrency: "JPY",
+      tradeType: "CFD",
+      enabled: true,
+      closeOnly: true,
+      viewOnly: false,
+    },
+    {
+      id: 9,
+      authority: "CORPORATE",
+      baseCurrency: "BCH",
+      quoteCurrency: "JPY",
+      tradeType: "CFD",
+      enabled: true,
+      closeOnly: false,
+      viewOnly: false,
+    },
+  ]);
+
+  assert.deepEqual([...products], [["BTC", 7]]);
+  assert.deepEqual(
+    parseRakutenOrderbook({
+      bestBid: "100",
+      bestAsk: "102",
+      bids: [{ price: "99" }],
+      asks: [{ price: "103" }],
+    }),
+    { bid: 100, ask: 102 },
+  );
+  assert.deepEqual(
+    parseRakutenOrderbook({
+      bids: [{ price: "99" }, { price: "100" }],
+      asks: [{ price: "103" }, { price: "102" }],
+    }),
+    { bid: 100, ask: 102 },
+  );
+});
+
+test("Rakuten fetch follows the live product list and orderbook IDs", async () => {
+  const requestedIds = [];
+  const quotes = await fetchRakutenLeverage(["BTC", "ETH", "SOL"], {
+    requestIntervalMs: 0,
+    fetchImpl: async (url) => {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.pathname.endsWith("/cfd/symbol")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [
+            {
+              id: 7,
+              authority: "PERSONAL",
+              baseCurrency: "BTC",
+              quoteCurrency: "JPY",
+              tradeType: "CFD",
+              enabled: true,
+              closeOnly: false,
+              viewOnly: false,
+            },
+            {
+              id: 8,
+              authority: "PERSONAL",
+              baseCurrency: "ETH",
+              quoteCurrency: "JPY",
+              tradeType: "CFD",
+              enabled: true,
+              closeOnly: false,
+              viewOnly: false,
+            },
+          ],
+        };
+      }
+      const id = parsedUrl.searchParams.get("symbolId");
+      requestedIds.push(id);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          bestBid: id === "7" ? "100" : "200",
+          bestAsk: id === "7" ? "102" : "204",
+        }),
+      };
+    },
+  });
+
+  assert.deepEqual(requestedIds, ["7", "8"]);
+  assert.deepEqual(quotes, {
+    BTC: { bid: 100, ask: 102 },
+    ETH: { bid: 200, ask: 204 },
+  });
+});
+
+test("FXTF parser selects JPY crypto CFD quotes from the official feed", () => {
+  assert.deepEqual(
+    parseFxtfRates({
+      feed: [
+        { data: { symbol: "BTCJPY_CFD", bid: 100, ask: 100 } },
+        { data: { symbol: "ETHJPY_CFD", bid: 200, ask: 202 } },
+        { data: { symbol: "BTCUSD_CFD", bid: 60_000, ask: 60_010 } },
+        { data: { symbol: "USDJPY", bid: 150, ask: 150.01 } },
+      ],
+    }),
+    {
+      BTC: { bid: 100, ask: 100 },
+      ETH: { bid: 200, ask: 202 },
+    },
+  );
 });

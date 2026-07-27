@@ -31,7 +31,7 @@ export function createSpreadSlackMessages(comparison, errors = {}) {
   const messages = sections.map((section, index) => [
     ...(index === 0
       ? [
-          "*暗号資産 販売所スプレッド比較*",
+          "*暗号資産 スプレッド比較*",
           "",
         ]
       : []),

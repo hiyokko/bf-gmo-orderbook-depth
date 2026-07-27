@@ -7,9 +7,9 @@
 
 - bitFlyer Crypto CFD (`FX_BTC_JPY`) とGMOコインのレバレッジBTC
   (`BTC_JPY`) の0.1 / 0.3 / 0.5 / 1 / 3 BTC板Depth
-- SBIVCの現在取扱銘柄を基準にした販売所スプレッド比較
+- SBIVCの現在取扱銘柄を基準にしたスプレッド比較
   - 現物: SBI VC / bF / CC / GMO / bb / OKJ
-  - レバレッジ: SBI VC / bF / GMO
+  - レバレッジ: SBI VC / bF / GMO / SBI FX / RW / FXTF
 
 ## 実行スケジュール
 
@@ -57,7 +57,9 @@ Excelの `CompareSheets` と同じ定義で、次の4表を出力します。
 公式一覧を取得・解析できない場合は、古い固定一覧で投稿せず実行を失敗させます。
 
 `-` は対象外または公式公開2-wayレートなし、`ERR` は取得・応答エラーです。
-推測値、最終価格、mid、取引所板を販売所レートの代用にはしません。
+推測値、最終価格、midを2-wayレートの代用にはしません。現物は各社の販売所
+BID/ASK、レバレッジは販売所・店頭CFDのBID/ASKまたは取引所板のbest bid/askを
+使用します。
 Slack側の長文分割で等幅コードブロックが崩れないよう、4種類の表は
 1表ずつ独立したメッセージとして順番に投稿します。
 
@@ -65,6 +67,12 @@ bitFlyer現物は公式販売所画面が利用する認証不要の `price2` �
 SBIVCの現行銘柄ごとに呼び出します。このエンドポイントは公式画面で使用されて
 いますが、公開API仕様書には掲載されていないため、応答が変わった場合は該当列を
 推測で補完せず取得エラーとして扱います。
+
+レバレッジでは、GMOとRW（楽天ウォレット）は取引所板のbest bid/ask、
+SBI VC・bF・SBI FX・FXTFは公式の2-wayレートを比較します。楽天ウォレットは
+公式公開APIの有効な個人向けJPY証拠金銘柄を実行時に取得するため、取扱変更を
+固定リストで補いません。SBI FXとFXTFは各社公式Web画面が利用する公開レートを
+取得します。
 
 ### 板Depth
 
@@ -143,7 +151,7 @@ npm test
 - `src/report.mjs`: JST表記とJSONレポート
 - `src/github-actions.mjs`: GitHub Actions APIクライアント
 - `src/watchdog.mjs`: 定時枠、実行履歴分類、復旧判断
-- `src/spread-sources.mjs`: SBIVC現行一覧と各社販売所レートの取得・変換
+- `src/spread-sources.mjs`: SBIVC現行一覧と各社2-wayレートの取得・変換
 - `src/spread-comparison.mjs`: スプレッド計算と比較表データ
 - `src/spread-slack.mjs`: 4種類のSlack比較表
 - `src/spread-application.mjs`: スプレッド取得からレポート保存までの実行制御
@@ -173,5 +181,8 @@ npm test
 - [bitFlyer販売所](https://bitflyer.com/ja-jp/ex/buysell)
 - [GMOコイン API](https://api.coin.z.com/docs/)
 - [Coincheck価格一覧](https://coincheck.com/ja/exchange/prices)
+- [楽天ウォレット 証拠金取引所API](https://www.rakuten-wallet.co.jp/service/api-leverage-exchange/)
+- [SBI FXトレード 暗号資産CFD](https://www.sbifxt.co.jp/service/cfd_index.html)
+- [FXTF 暗号資産CFDリアルタイムレート](https://www.fxtrade.co.jp/crypto/rate/)
 
 板は取得直後から変化するため、結果はスナップショットとして扱ってください。手数料・資金調達料・取得後の価格変動は計算に含みません。
