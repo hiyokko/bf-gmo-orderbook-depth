@@ -41,6 +41,8 @@ These instructions apply to the repository root and all descendants.
   order: SBI VC, bF, GMO, SBI FX, RW, FXTF.
 - Use best bid/ask for leverage exchange orderbooks (GMO and Rakuten Wallet)
   and the official two-way dealer quotes for leverage OTC/CFD venues.
+- Fetch GMO spot and leverage best bid/ask from its documented public ticker
+  endpoint, using plain symbols for spot and `_JPY` symbols for leverage.
 - Discover enabled personal JPY CFD products from Rakuten Wallet's public
   symbol endpoint at runtime, respect its 200 ms public-API interval, and fetch
   each matching SBIVC leverage symbol's best bid/ask from its orderbook.

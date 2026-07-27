@@ -148,13 +148,16 @@ test("source parsers normalize known venue symbol aliases", () => {
 
 test("GMO parser separates spot and leverage products", () => {
   const gmo = parseGmoRates({
+    status: 0,
     data: [
-      { productId: 1001, bid: "100", ask: "102" },
-      { productId: 10001, bid: "101", ask: "103" },
+      { symbol: "BTC", bid: "100", ask: "102" },
+      { symbol: "BTC_JPY", bid: "101", ask: "103" },
+      { symbol: "SUI_JPY", bid: "200", ask: "205" },
     ],
   });
   assert.deepEqual(gmo.spot.gmo.BTC, { bid: 100, ask: 102 });
   assert.deepEqual(gmo.leverage.gmo.BTC, { bid: 101, ask: 103 });
+  assert.deepEqual(gmo.leverage.gmo.SUI, { bid: 200, ask: 205 });
 });
 
 test("SBI FX parser extracts the official website two-way CFD quote", () => {

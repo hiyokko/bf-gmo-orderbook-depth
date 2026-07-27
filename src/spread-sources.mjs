@@ -6,7 +6,7 @@ export const SPREAD_SOURCE_URLS = Object.freeze({
   bitflyerSpot: "https://bitflyer.com/api/app/market/price2",
   bitflyerLeverage: "https://api.bitflyer.com/v1/getboard?product_code=FX_BTC_JPY",
   coincheck: "https://coincheck.com/front_api/marketplace_rates",
-  gmo: "https://coin.z.com/api/v1/master/getCurrentRate.json",
+  gmo: "https://api.coin.z.com/public/v1/ticker",
   bitbank: "https://public.bitbank.cc/dealer/feed",
   okj: "https://www.okj.com/v2/asset/transaction/public/currencies?checkOnline=true&dynamicQuotePrecision=true",
   sbifx: "https://trade.sbifxt.co.jp/api_crypto/HttpApi/Rate.aspx",
@@ -15,41 +15,6 @@ export const SPREAD_SOURCE_URLS = Object.freeze({
   fxtf: "https://api.fxtrade.co.jp/live/getrategx",
 });
 
-const GMO_SPOT_PRODUCT_IDS = Object.freeze({
-  1001: "BTC",
-  1002: "ETH",
-  1003: "BCH",
-  1004: "LTC",
-  1005: "XRP",
-  1007: "XLM",
-  1013: "DOT",
-  1014: "ATOM",
-  1020: "ADA",
-  1021: "LINK",
-  1022: "DOGE",
-  1023: "SOL",
-  1026: "FIL",
-  1027: "SAND",
-  1028: "CHZ",
-  1030: "AVAX",
-  1032: "SUI",
-  1033: "ZPG",
-});
-
-const GMO_LEVERAGE_PRODUCT_IDS = Object.freeze({
-  10001: "BTC",
-  10002: "ETH",
-  10003: "BCH",
-  10004: "LTC",
-  10005: "XRP",
-  10007: "XLM",
-  10013: "DOT",
-  10014: "ATOM",
-  10020: "ADA",
-  10021: "LINK",
-  10022: "DOGE",
-  10023: "SOL",
-});
 const MAX_REQUEST_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY_MS = 250;
 const BITFLYER_SPOT_BATCH_SIZE = 6;
@@ -218,12 +183,16 @@ export function parseBitflyerSpotRate(body) {
 export function parseGmoRates(body) {
   const spot = {};
   const leverage = {};
+  if (body?.status !== undefined && Number(body.status) !== 0) {
+    return { spot: { gmo: spot }, leverage: { gmo: leverage } };
+  }
+
   for (const row of body?.data || []) {
-    const productId = String(row?.productId ?? "");
-    const spotSymbol = GMO_SPOT_PRODUCT_IDS[productId];
-    const leverageSymbol = GMO_LEVERAGE_PRODUCT_IDS[productId];
-    if (spotSymbol) assignQuote(spot, spotSymbol, row?.bid, row?.ask);
-    if (leverageSymbol) assignQuote(leverage, leverageSymbol, row?.bid, row?.ask);
+    const match = /^([A-Z][A-Z0-9]{1,15})(_JPY)?$/.exec(
+      String(row?.symbol || "").toUpperCase(),
+    );
+    if (!match) continue;
+    assignQuote(match[2] ? leverage : spot, match[1], row?.bid, row?.ask);
   }
   return { spot: { gmo: spot }, leverage: { gmo: leverage } };
 }
