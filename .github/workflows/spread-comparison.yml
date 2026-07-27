@@ -32,9 +32,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      # These dealer-site feeds reject GitHub's overseas hosted-runner IPs.
-      # Neither venue currently provides a usable official public API.
-      SPREAD_DISABLED_VENUES: bp,ct
+      # CoinTrade's dealer-site feed rejects GitHub's hosted-runner IPs.
+      SPREAD_DISABLED_VENUES: ct
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -64,10 +64,13 @@ SBIVCの現行銘柄ごとに呼び出します。このエンドポイントは
 いますが、公開API仕様書には掲載されていないため、応答が変わった場合は該当列を
 推測で補完せず取得エラーとして扱います。
 
-BITPOINTとCoinTradeのWeb画面用レートはGitHubホストランナーから
-HTTP 403となります。BITPOINTのSmart APIは現在利用不可、CoinTradeは
-公式にAPI未提供と案内しているため、GitHub Actionsでは両列を `-` とします。
-両社の値を自動取得する場合は、日本国内ネットワーク上のself-hosted runnerが
+BITPOINT現物は公式価格一覧ページが公開している
+`pricedata/twoway/normal-price.json` の `bidPrice` と `askPrice` を使用します。
+`LNKJPY` は比較表の銘柄表記に合わせて `LINK` へ正規化します。
+
+CoinTradeのWeb画面用レートはGitHubホストランナーからHTTP 403となり、
+公式にもAPI未提供と案内されているため、GitHub ActionsではCT列を `-` とします。
+CTの値を自動取得する場合は、日本国内ネットワーク上のself-hosted runnerが
 別途必要です。
 
 ### 板Depth

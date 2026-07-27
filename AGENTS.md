@@ -36,6 +36,8 @@ These instructions apply to the repository root and all descendants.
 - Fetch bitFlyer spot dealer quotes for each current SBIVC symbol from the
   official Buy/Sell page's unauthenticated `api/app/market/price2` endpoint.
   Do not use the BTC-only Echo API for the multi-asset comparison.
+- Fetch BITPOINT dealer quotes from the official public
+  `pricedata/twoway/normal-price.json` feed and normalize `LNK` to `LINK`.
 - Display spot dealer-spread columns in this order: SBI VC, bF, CC, BP, GMO,
   bb, CT, OKJ. Display leverage columns in this order: SBI VC, bF, GMO.
 - Calculate dealer spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread
@@ -44,9 +46,9 @@ These instructions apply to the repository root and all descendants.
   values for an unavailable dealer two-way quote. Display such cells as `-`.
 - Post each of the four spread-comparison tables as an independent Slack
   message below 4,000 characters so Slack cannot split a code fence.
-- Keep BP and CT disabled on GitHub-hosted runners because their dealer-site
-  feeds return HTTP 403 there and no usable official public API is available.
-  Represent those unavailable quotes as `-`, not `ERR` or inferred values.
+- Keep CT disabled on GitHub-hosted runners because its dealer-site feed
+  returns HTTP 403 there and CoinTrade provides no public API. Represent those
+  unavailable quotes as `-`, not `ERR` or inferred values.
 - Keep the spread-comparison schedule and its watchdog separate from the
   orderbook-depth workflow so either report can recover independently.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
