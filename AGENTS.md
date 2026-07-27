@@ -46,9 +46,10 @@ These instructions apply to the repository root and all descendants.
   values for an unavailable dealer two-way quote. Display such cells as `-`.
 - Post each of the four spread-comparison tables as an independent Slack
   message below 4,000 characters so Slack cannot split a code fence.
-- Keep CT disabled on GitHub-hosted runners because its dealer-site feed
-  returns HTTP 403 there and CoinTrade provides no public API. Represent those
-  unavailable quotes as `-`, not `ERR` or inferred values.
+- Keep BP and CT disabled on GitHub-hosted runners because their dealer-site
+  feeds return HTTP 403 there. BITPOINT's JSON feed remains available for
+  local or self-hosted runs, while CoinTrade provides no public API. Represent
+  those unavailable quotes as `-`, not `ERR` or inferred values.
 - Keep the spread-comparison schedule and its watchdog separate from the
   orderbook-depth workflow so either report can recover independently.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.

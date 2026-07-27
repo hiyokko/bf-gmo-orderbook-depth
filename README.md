@@ -67,6 +67,9 @@ SBIVCの現行銘柄ごとに呼び出します。このエンドポイントは
 BITPOINT現物は公式価格一覧ページが公開している
 `pricedata/twoway/normal-price.json` の `bidPrice` と `askPrice` を使用します。
 `LNKJPY` は比較表の銘柄表記に合わせて `LINK` へ正規化します。
+ただし、このJSONはGitHubホストランナーからHTTP 403となることを実際の
+Actions dry-runで確認しているため、GitHub ActionsではBP列を `-` とします。
+国内ネットワーク上のローカル実行またはself-hosted runnerでは取得できます。
 
 CoinTradeのWeb画面用レートはGitHubホストランナーからHTTP 403となり、
 公式にもAPI未提供と案内されているため、GitHub ActionsではCT列を `-` とします。
