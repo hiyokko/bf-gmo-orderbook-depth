@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  fetchBitflyerSpot,
   parseBitbankRates,
+  parseBitflyerSpotRate,
   parseBitpointRates,
   parseCoincheckRates,
   parseCointradeRates,
@@ -45,6 +47,69 @@ test("SBIVC nested dealer feed separates spot and leverage quotes", () => {
   assert.deepEqual(parsed.spot.sbivc.BTC, { bid: 10_000, ask: 10_200 });
   assert.deepEqual(parsed.leverage.sbivc.BTC, { bid: 10_050, ask: 10_150 });
   assert.equal(parsed.spot.sbivc.OLD, undefined);
+});
+
+test("bitFlyer dealer rate parser accepts enabled JPY quotes", () => {
+  assert.deepEqual(
+    parseBitflyerSpotRate({
+      data: {
+        product_code: "ETH_JPY",
+        bid: 312_532,
+        ask: 335_228,
+        enable_bid: true,
+        enable_ask: true,
+      },
+      status: 0,
+    }).ETH,
+    { bid: 312_532, ask: 335_228 },
+  );
+  assert.deepEqual(
+    parseBitflyerSpotRate({
+      data: {
+        product_code: "CANTON_JPY",
+        bid: -1,
+        ask: -1,
+        enable_bid: false,
+        enable_ask: false,
+      },
+      status: 0,
+    }),
+    {},
+  );
+});
+
+test("bitFlyer spot fetch gets each SBIVC symbol and skips unsupported quotes", async () => {
+  const requestedUrls = [];
+  const quotes = await fetchBitflyerSpot(["BTC", "ETH", "CANTON"], {
+    fetchImpl: async (url) => {
+      requestedUrls.push(url);
+      const productCode = new URL(url).searchParams.get("product_code");
+      const supported = productCode !== "CANTON_JPY";
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            product_code: productCode,
+            bid: supported ? (productCode === "BTC_JPY" ? 100 : 200) : -1,
+            ask: supported ? (productCode === "BTC_JPY" ? 102 : 204) : -1,
+            enable_bid: supported,
+            enable_ask: supported,
+          },
+          status: 0,
+        }),
+      };
+    },
+  });
+
+  assert.deepEqual(quotes, {
+    BTC: { bid: 100, ask: 102 },
+    ETH: { bid: 200, ask: 204 },
+  });
+  assert.deepEqual(
+    requestedUrls.map((url) => new URL(url).searchParams.get("product_code")),
+    ["BTC_JPY", "ETH_JPY", "CANTON_JPY"],
+  );
 });
 
 test("source parsers normalize known venue symbol aliases", () => {

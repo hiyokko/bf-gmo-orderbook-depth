@@ -59,6 +59,11 @@ Excelの `CompareSheets` と同じ定義で、次の4表を出力します。
 Slack側の長文分割で等幅コードブロックが崩れないよう、4種類の表は
 1表ずつ独立したメッセージとして順番に投稿します。
 
+bitFlyer現物は公式販売所画面が利用する認証不要の `price2` エンドポイントを
+SBIVCの現行銘柄ごとに呼び出します。このエンドポイントは公式画面で使用されて
+いますが、公開API仕様書には掲載されていないため、応答が変わった場合は該当列を
+推測で補完せず取得エラーとして扱います。
+
 BITPOINTとCoinTradeのWeb画面用レートはGitHubホストランナーから
 HTTP 403となります。BITPOINTのSmart APIは現在利用不可、CoinTradeは
 公式にAPI未提供と案内しているため、GitHub Actionsでは両列を `-` とします。
@@ -169,7 +174,7 @@ npm test
 ## API
 
 - [bitFlyer Lightning API](https://lightning.bitflyer.com/docs?lang=ja)
-- [bitFlyer Echo API](https://bitflyer.com/ja-jp/corporate/echo/api)
+- [bitFlyer販売所](https://bitflyer.com/ja-jp/ex/buysell)
 - [GMOコイン API](https://api.coin.z.com/docs/)
 - [Coincheck価格一覧](https://coincheck.com/ja/exchange/prices)
 - [BITPOINT価格一覧](https://www.bitpoint.co.jp/chart/price-list/)

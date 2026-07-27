@@ -33,6 +33,9 @@ These instructions apply to the repository root and all descendants.
   `レバレッジ（販売所）` tables on the official SBIVC service-overview page at
   runtime. Do not fall back to a stale hard-coded symbol list when the official
   listing page cannot be parsed.
+- Fetch bitFlyer spot dealer quotes for each current SBIVC symbol from the
+  official Buy/Sell page's unauthenticated `api/app/market/price2` endpoint.
+  Do not use the BTC-only Echo API for the multi-asset comparison.
 - Display spot dealer-spread columns in this order: SBI VC, bF, CC, BP, GMO,
   bb, CT, OKJ. Display leverage columns in this order: SBI VC, bF, GMO.
 - Calculate dealer spread as `ask - bid`, mid as `(ask + bid) / 2`, and spread

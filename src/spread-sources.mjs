@@ -3,7 +3,7 @@ import { RUNTIME_DEFAULTS } from "./config.mjs";
 export const SPREAD_SOURCE_URLS = Object.freeze({
   sbivcListings: "https://www.sbivc.co.jp/services/service-overview",
   sbivcRates: "https://www.sbivc.co.jp/api/get_priceFeedList_all",
-  bitflyerSpot: "https://bitflyer.com/api/echo/price",
+  bitflyerSpot: "https://bitflyer.com/api/app/market/price2",
   bitflyerLeverage: "https://api.bitflyer.com/v1/getboard?product_code=FX_BTC_JPY",
   coincheck: "https://coincheck.com/front_api/marketplace_rates",
   bitpoint: "https://www.bitpoint.co.jp/pricedata/twoway/normal-price.json",
@@ -51,6 +51,7 @@ const GMO_LEVERAGE_PRODUCT_IDS = Object.freeze({
 });
 const MAX_REQUEST_ATTEMPTS = 3;
 const INITIAL_RETRY_DELAY_MS = 250;
+const BITFLYER_SPOT_BATCH_SIZE = 6;
 
 export async function collectSpreadSources({
   fetchImpl = globalThis.fetch,
@@ -77,7 +78,9 @@ export async function collectSpreadSources({
       markets: ["spot"],
       venues: ["bf"],
       run: async () => ({
-        spot: { bf: await fetchBitflyerSpot({ fetchImpl, timeoutMs }) },
+        spot: {
+          bf: await fetchBitflyerSpot(listings.spot, { fetchImpl, timeoutMs }),
+        },
       }),
     },
     {
@@ -184,6 +187,21 @@ export function parseCoincheckRates(body) {
   return quotes;
 }
 
+export function parseBitflyerSpotRate(body) {
+  const quotes = {};
+  if (body?.status !== undefined && Number(body.status) !== 0) return quotes;
+
+  const row = body?.data;
+  const match = /^([A-Z0-9]+)_JPY$/.exec(
+    String(row?.product_code || "").toUpperCase(),
+  );
+  if (!match || row?.enable_bid === false || row?.enable_ask === false) {
+    return quotes;
+  }
+  assignQuote(quotes, match[1], row?.bid, row?.ask);
+  return quotes;
+}
+
 export function parseBitpointRates(body) {
   const quotes = {};
   for (const row of body?.ticker || []) {
@@ -247,10 +265,26 @@ async function fetchSbivcQuotes(options) {
   return parsed;
 }
 
-async function fetchBitflyerSpot(options) {
-  const body = await requestJson(SPREAD_SOURCE_URLS.bitflyerSpot, options);
+export async function fetchBitflyerSpot(targetSymbols, options) {
   const quotes = {};
-  assignQuote(quotes, "BTC", body?.bid, body?.ask);
+  const symbols = [...new Set(
+    (Array.isArray(targetSymbols) ? targetSymbols : [])
+      .map((symbol) => String(symbol).trim().toUpperCase())
+      .filter((symbol) => /^[A-Z][A-Z0-9]{1,15}$/.test(symbol)),
+  )];
+
+  for (let index = 0; index < symbols.length; index += BITFLYER_SPOT_BATCH_SIZE) {
+    const batch = symbols.slice(index, index + BITFLYER_SPOT_BATCH_SIZE);
+    const results = await Promise.allSettled(batch.map(async (symbol) => {
+      const productCode = `${symbol}_JPY`;
+      const url = `${SPREAD_SOURCE_URLS.bitflyerSpot}?product_code=${encodeURIComponent(productCode)}`;
+      return parseBitflyerSpotRate(await requestJson(url, options));
+    }));
+    for (const result of results) {
+      if (result.status === "fulfilled") Object.assign(quotes, result.value);
+    }
+  }
+
   return requireQuotes(quotes, "bitFlyer spot");
 }
 
