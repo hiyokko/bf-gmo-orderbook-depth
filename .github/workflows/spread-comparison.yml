@@ -58,6 +58,16 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && !inputs.post_to_slack }}
         run: npm run spread:dry-run
 
+      - name: Wait for the matching orderbook report
+        if: ${{ steps.slot.outputs.should_post == 'true' && (github.event_name == 'schedule' || inputs.watchdog_target != '') }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_TOKEN: ${{ github.token }}
+          WATCHDOG_TARGET: ${{ inputs.watchdog_target }}
+          ORDERBOOK_WAIT_TIMEOUT_MS: "360000"
+          ORDERBOOK_POLL_INTERVAL_MS: "10000"
+        run: node scripts/wait-for-orderbook.mjs
+
       - name: Fetch, calculate, and post to Slack
         if: ${{ (github.event_name == 'schedule' || inputs.post_to_slack) && steps.slot.outputs.should_post == 'true' }}
         env:

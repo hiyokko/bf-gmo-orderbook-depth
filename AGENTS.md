@@ -60,6 +60,9 @@ These instructions apply to the repository root and all descendants.
 - Keep the two primary report workflows separate. Use one unified watchdog
   workflow that evaluates and dispatches each report independently so a failure
   for one report does not prevent recovery of the other.
+- Before a scheduled or watchdog-triggered spread post, wait for the matching
+  orderbook-depth slot to complete successfully so Slack order is always depth,
+  then spread. Manual spread tests remain independent.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
 - Run `npm test`, `npm run dry-run`, and `npm run spread:dry-run` after code or workflow changes.

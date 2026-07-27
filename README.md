@@ -23,6 +23,9 @@ GitHub Actionsが次の時刻に自動実行します。
 
 板Depthは `orderbook-depth.yml`、スプレッド比較は
 `spread-comparison.yml` がそれぞれ独立して実行します。
+定時実行とwatchdog復旧では、スプレッド比較が同じ定時枠の板Depth成功を
+確認してから投稿するため、Slack上の順番は必ず「板Depth → スプレッド比較」
+になります。手動テストはそれぞれ単独で実行できます。
 
 ### Watchdog
 
@@ -153,6 +156,7 @@ npm test
 - `src/github-actions.mjs`: GitHub Actions APIクライアント
 - `src/watchdog.mjs`: 定時枠、実行履歴分類、復旧判断
 - `src/watchdog-application.mjs`: 2レポートの独立した監視・復旧制御
+- `src/report-order.mjs`: スプレッド投稿前の板Depth完了待機
 - `src/spread-sources.mjs`: SBIVC現行一覧と各社2-wayレートの取得・変換
 - `src/spread-comparison.mjs`: スプレッド計算と比較表データ
 - `src/spread-slack.mjs`: 4種類のSlack比較表

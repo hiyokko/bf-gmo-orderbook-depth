@@ -50,6 +50,11 @@ test("spread comparison workflow uses the same JST slots and protects the Slack 
   assert.match(workflow, /SLACK_WEBHOOK_URL: \$\{\{ secrets\.SLACK_WEBHOOK_URL \}\}/);
   assert.doesNotMatch(workflow, /SPREAD_DISABLED_VENUES/);
   assert.doesNotMatch(workflow, /pull_request:|push:/);
+  const waitIndex = workflow.indexOf("node scripts/wait-for-orderbook.mjs");
+  const postIndex = workflow.indexOf("npm run spread\n");
+  assert.ok(waitIndex >= 0);
+  assert.ok(postIndex > waitIndex);
+  assert.match(workflow, /ORDERBOOK_WAIT_TIMEOUT_MS: "360000"/);
 
   const actionReferences = [...workflow.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
   assert.ok(actionReferences.length >= 2);
