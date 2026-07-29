@@ -158,6 +158,7 @@ test("QuickChart URL contains a compact vertical chart without credentials", () 
   assert.equal(chart.options.scales.y.min, 0);
   assert.equal(chart.options.scales.y.max, 100);
   assert.deepEqual(chart.data.datasets[0].data, [42, 37, 29.5]);
+  assert.equal(chart.data.datasets[0].tension, 0);
   assert.doesNotMatch(imageUrl, /key|token|secret/i);
 });
 

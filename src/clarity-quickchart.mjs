@@ -46,7 +46,7 @@ export function createClarityQuickChartUrl(snapshot, {
         pointBorderWidth: 3,
         pointHitRadius: 8,
         fill: true,
-        tension: 0.25,
+        tension: 0,
       }],
     },
     options: {
