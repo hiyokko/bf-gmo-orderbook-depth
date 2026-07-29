@@ -70,8 +70,8 @@ These instructions apply to the repository root and all descendants.
   and fetch its price history from the official CLOB API. Render the history as
   all-history, trailing-30-day, and trailing-7-day QuickChart images using
   non-expiring URLs under 2,400 characters, leaving headroom below Slack's
-  3,000-character limit. Render at 1800x920 with a device pixel ratio of 2,
-  producing a 3600x1840 image with enlarged chart typography.
+  3,000-character limit. Render at 900x460 with a device pixel ratio of 2,
+  producing a 1800x920 image with Slack-readable chart typography.
   Do not use a short URL or API key. Fall back per period to the JSON-only
   Slack Unicode area chart with a vertical probability axis when QuickChart
   fails.
