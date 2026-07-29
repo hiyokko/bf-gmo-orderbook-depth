@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createClarityTextChart } from "../src/clarity-chart.mjs";
+import { calculateChangeMetrics } from "../src/clarity-metrics.mjs";
+import { createClarityPeriodSnapshots } from "../src/clarity-periods.mjs";
 import {
   createClarityQuickChartUrl,
   verifyQuickChartImage,
@@ -109,6 +111,42 @@ test("QuickChart URL contains a compact vertical chart without credentials", () 
   assert.doesNotMatch(imageUrl, /key|token|secret/i);
 });
 
+test("QuickChart suppresses a duplicate current-day axis label", () => {
+  const snapshot = {
+    ...parseClarityEvent(EVENT),
+    history: [
+      { timestamp: 1_785_240_000, probability: 0.37 },
+      { timestamp: 1_785_312_000, probability: 0.31 },
+      { timestamp: 1_785_326_400, probability: 0.295 },
+    ],
+  };
+  const chart = JSON.parse(
+    new URL(createClarityQuickChartUrl(snapshot)).searchParams.get("chart"),
+  );
+
+  assert.deepEqual(chart.data.labels, ["7/28", "", "7/29"]);
+});
+
+test("CLARITY periods select all history, trailing month, and trailing week", () => {
+  const day = 86_400;
+  const latest = 5_000_000;
+  const periods = createClarityPeriodSnapshots({
+    history: [
+      { timestamp: latest - 40 * day, probability: 0.8 },
+      { timestamp: latest - 30 * day, probability: 0.6 },
+      { timestamp: latest - 8 * day, probability: 0.5 },
+      { timestamp: latest - 7 * day, probability: 0.4 },
+      { timestamp: latest, probability: 0.3 },
+    ],
+  });
+
+  assert.deepEqual(periods.map(({ id }) => id), ["all", "month", "week"]);
+  assert.deepEqual(
+    periods.map(({ snapshot }) => snapshot.history.length),
+    [5, 4, 2],
+  );
+});
+
 test("Slack payload uses the QuickChart image and keeps text fallback", () => {
   const snapshot = {
     ...parseClarityEvent(EVENT),
@@ -124,8 +162,17 @@ test("Slack payload uses the QuickChart image and keeps text fallback", () => {
     height: 4,
   });
   const imageUrl = createClarityQuickChartUrl(snapshot);
-  const payload = createClaritySlackPayload(snapshot, textChart, { imageUrl });
-  const fallback = createClaritySlackPayload(snapshot, textChart);
+  const changeMetrics = calculateChangeMetrics(snapshot.history);
+  const charts = [
+    { label: "All history", textChart, imageUrl, changeMetrics },
+    { label: "Last 1 month", textChart, imageUrl, changeMetrics },
+    { label: "Last 1 week", textChart, imageUrl, changeMetrics },
+  ];
+  const payload = createClaritySlackPayload(snapshot, charts);
+  const fallback = createClaritySlackPayload(
+    snapshot,
+    charts.map((chart) => ({ ...chart, imageUrl: null })),
+  );
 
   assert.match(textChart, /^100% ┤/u);
   assert.match(textChart, /  0% └─{12}/u);
@@ -134,10 +181,20 @@ test("Slack payload uses the QuickChart image and keeps text fallback", () => {
   assert.match(payload.text, /YES 29\.5%/);
   assert.equal(payload.blocks[0].type, "header");
   assert.match(payload.blocks[2].fields[0].text, /29\.5%/);
-  assert.match(payload.blocks[2].fields[1].text, /▼ 7\.5 pt/);
-  assert.equal(payload.blocks[4].type, "image");
-  assert.equal(payload.blocks[4].image_url, imageUrl);
-  assert.match(fallback.blocks[4].text.text, /YES probability history/);
+  assert.match(
+    payload.blocks[2].fields[1].text,
+    /▼ 20\.3% \(-7\.5 pt\)/,
+  );
+  assert.match(
+    payload.blocks[3].fields[0].text,
+    /▼ 29\.8% \(-12\.5 pt\)/,
+  );
+  assert.deepEqual(
+    payload.blocks.slice(5, 8).map(({ type }) => type),
+    ["image", "image", "image"],
+  );
+  assert.equal(payload.blocks[5].image_url, imageUrl);
+  assert.match(fallback.blocks[5].text.text, /\*All history\*/);
   assert.ok(Math.abs(calculateChange(snapshot.history, 86_400) + 0.075) < 1e-12);
 });
 

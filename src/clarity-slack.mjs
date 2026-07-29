@@ -1,8 +1,11 @@
-export function createClaritySlackPayload(snapshot, textChart, {
-  imageUrl = null,
-} = {}) {
+import { calculateChangeMetrics } from "./clarity-metrics.mjs";
+
+export function createClaritySlackPayload(snapshot, charts) {
   const currentPercent = snapshot.yesProbability * 100;
-  const change24h = calculateChange(snapshot.history, 24 * 60 * 60);
+  const change24h = calculateChangeMetrics(
+    snapshot.history,
+    24 * 60 * 60,
+  );
   const probabilities = snapshot.history.map(
     (point) => point.probability * 100,
   );
@@ -37,7 +40,7 @@ export function createClaritySlackPayload(snapshot, textChart, {
           },
           {
             type: "mrkdwn",
-            text: `*24h change*\n\`${formatChange(change24h)}\``,
+            text: `*24h change rate*\n\`${formatChange(change24h)}\``,
           },
           {
             type: "mrkdwn",
@@ -52,28 +55,20 @@ export function createClaritySlackPayload(snapshot, textChart, {
         ],
       },
       {
-        type: "divider",
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "*Period change rates*",
+        },
+        fields: charts.map((chart) => ({
+          type: "mrkdwn",
+          text: `*${chart.label}*\n\`${formatChange(chart.changeMetrics)}\``,
+        })),
       },
       {
-        ...(imageUrl
-          ? {
-              type: "image",
-              image_url: imageUrl,
-              alt_text: "CLARITY Act YES probability history chart",
-              title: {
-                type: "plain_text",
-                text: "YES probability history",
-                emoji: true,
-              },
-            }
-          : {
-              type: "section",
-              text: {
-                type: "mrkdwn",
-                text: `*YES probability history*\n\`\`\`\n${textChart}\n\`\`\``,
-              },
-            }),
+        type: "divider",
       },
+      ...charts.map(createChartBlock),
       {
         type: "context",
         elements: [{
@@ -85,21 +80,48 @@ export function createClaritySlackPayload(snapshot, textChart, {
   };
 }
 
-export function calculateChange(history, seconds) {
-  if (!Array.isArray(history) || history.length < 2) return null;
-  const latest = history.at(-1);
-  const cutoff = latest.timestamp - seconds;
-  const reference = [...history].reverse().find(
-    (point) => point.timestamp <= cutoff,
-  );
-  return reference ? latest.probability - reference.probability : null;
+function createChartBlock(chart) {
+  if (chart.imageUrl) {
+    return {
+      type: "image",
+      image_url: chart.imageUrl,
+      alt_text: `CLARITY Act YES probability — ${chart.label}`,
+      title: {
+        type: "plain_text",
+        text: chart.label,
+        emoji: true,
+      },
+    };
+  }
+  return {
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: `*${chart.label}*\n\`\`\`\n${chart.textChart}\n\`\`\``,
+    },
+  };
 }
 
-function formatChange(change) {
-  if (change === null) return "—";
-  const pointChange = change * 100;
-  const direction = pointChange > 0 ? "▲" : pointChange < 0 ? "▼" : "→";
-  return `${direction} ${Math.abs(pointChange).toFixed(1)} pt`;
+export function calculateChange(history, seconds) {
+  return calculateChangeMetrics(history, seconds)?.probabilityChange ?? null;
+}
+
+function formatChange(metrics) {
+  if (!metrics) return "—";
+  const direction = metrics.pointChange > 0
+    ? "▲"
+    : metrics.pointChange < 0
+      ? "▼"
+      : "→";
+  const pointChange = `${
+    metrics.pointChange > 0 ? "+" : ""
+  }${metrics.pointChange.toFixed(1)} pt`;
+  if (metrics.rateChange === null) {
+    return `${direction} ${pointChange}`;
+  }
+  return `${direction} ${Math.abs(metrics.rateChange).toFixed(1)}% (${
+    pointChange
+  })`;
 }
 
 function escapeSlack(value) {

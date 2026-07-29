@@ -5,6 +5,8 @@ import {
   createClarityQuickChartUrl,
   verifyQuickChartImage,
 } from "./clarity-quickchart.mjs";
+import { calculateChangeMetrics } from "./clarity-metrics.mjs";
+import { createClarityPeriodSnapshots } from "./clarity-periods.mjs";
 import { createClaritySlackPayload } from "./clarity-slack.mjs";
 import { fetchClarityMarket } from "./polymarket.mjs";
 import { postPayloadToSlack } from "./slack.mjs";
@@ -20,35 +22,15 @@ export async function runClarityReport({
   if (!outputPath) throw new Error("Output path is required");
 
   const snapshot = await fetchMarketImpl({ fetchImpl, fetchedAt });
-  const textChart = createClarityTextChart(snapshot);
-  const quickChart = {
-    url: null,
-    verified: null,
-    included: false,
-    error: null,
-  };
-  let imageUrl = null;
-  try {
-    quickChart.url = createClarityQuickChartUrl(snapshot);
-    imageUrl = quickChart.url;
-  } catch (error) {
-    quickChart.error = toError(error).message;
+  const charts = createClarityPeriodSnapshots(snapshot).map((period) => (
+    createChart(period)
+  ));
+  if (!dryRun) {
+    await Promise.all(charts.map(
+      (chart) => verifyChart(chart, { fetchImpl }),
+    ));
   }
-
-  if (!dryRun && imageUrl) {
-    try {
-      await verifyQuickChartImage(imageUrl, { fetchImpl });
-      quickChart.verified = true;
-    } catch (error) {
-      quickChart.verified = false;
-      quickChart.error = toError(error).message;
-      imageUrl = null;
-    }
-  }
-  quickChart.included = Boolean(imageUrl);
-  const slackPayload = createClaritySlackPayload(snapshot, textChart, {
-    imageUrl,
-  });
+  const slackPayload = createClaritySlackPayload(snapshot, charts);
   const slack = {
     requested: !dryRun,
     posted: false,
@@ -74,8 +56,9 @@ export async function runClarityReport({
   const report = {
     fetchedAt: fetchedAt.toISOString(),
     market: snapshot,
-    textChart,
-    quickChart,
+    textChart: charts[0].textChart,
+    quickChart: toLegacyQuickChart(charts[0]),
+    charts: charts.map(toReportChart),
     slack,
   };
   await saveJson(report, outputPath);
@@ -90,4 +73,61 @@ async function saveJson(report, outputPath) {
 
 function toError(error) {
   return error instanceof Error ? error : new Error(String(error));
+}
+
+function createChart(period) {
+  const chart = {
+    id: period.id,
+    label: period.label,
+    textChart: createClarityTextChart(period.snapshot),
+    changeMetrics: calculateChangeMetrics(period.snapshot.history),
+    imageUrl: null,
+    verified: null,
+    included: false,
+    error: null,
+  };
+  try {
+    chart.imageUrl = createClarityQuickChartUrl(period.snapshot, {
+      periodLabel: period.label,
+    });
+    chart.included = true;
+  } catch (error) {
+    chart.error = toError(error).message;
+  }
+  return chart;
+}
+
+async function verifyChart(chart, { fetchImpl }) {
+  if (!chart.imageUrl) return;
+  try {
+    await verifyQuickChartImage(chart.imageUrl, { fetchImpl });
+    chart.verified = true;
+  } catch (error) {
+    chart.verified = false;
+    chart.included = false;
+    chart.error = toError(error).message;
+    chart.imageUrl = null;
+  }
+}
+
+function toReportChart(chart) {
+  return {
+    id: chart.id,
+    label: chart.label,
+    textChart: chart.textChart,
+    changeMetrics: chart.changeMetrics,
+    imageUrl: chart.imageUrl,
+    verified: chart.verified,
+    included: chart.included,
+    error: chart.error,
+  };
+}
+
+function toLegacyQuickChart(chart) {
+  return {
+    url: chart.imageUrl,
+    verified: chart.verified,
+    included: chart.included,
+    error: chart.error,
+  };
 }

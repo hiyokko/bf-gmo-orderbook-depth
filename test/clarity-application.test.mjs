@@ -44,6 +44,12 @@ test("CLARITY application saves a QuickChart preview without posting in dry-run"
     assert.equal(result.report.quickChart.included, true);
     assert.equal(result.report.quickChart.verified, null);
     assert.match(result.report.quickChart.url, /^https:\/\/quickchart\.io\//);
+    assert.equal(result.report.charts.length, 3);
+    assert.deepEqual(
+      result.report.charts.map(({ id }) => id),
+      ["all", "month", "week"],
+    );
+    assert.ok(result.report.charts.every(({ included }) => included));
     assert.match(saved.textChart, /^100% ┤/);
     assert.match(saved.textChart, /  0% └/);
   } finally {
@@ -80,10 +86,14 @@ test("CLARITY application posts Block Kit payload through the existing webhook",
 
     assert.equal(result.report.slack.posted, true);
     assert.match(postedPayload.text, /YES 29\.5%/);
-    assert.equal(postedPayload.blocks.length, 6);
+    assert.equal(postedPayload.blocks.length, 9);
     assert.equal(postedPayload.blocks[0].type, "header");
-    assert.equal(postedPayload.blocks[4].type, "image");
+    assert.deepEqual(
+      postedPayload.blocks.slice(5, 8).map(({ type }) => type),
+      ["image", "image", "image"],
+    );
     assert.equal(result.report.quickChart.verified, true);
+    assert.ok(result.report.charts.every(({ verified }) => verified));
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -119,10 +129,13 @@ test("CLARITY application falls back to text when QuickChart is unavailable", as
     assert.equal(result.report.slack.posted, true);
     assert.equal(result.report.quickChart.verified, false);
     assert.match(result.report.quickChart.error, /HTTP 503/);
-    assert.equal(postedPayload.blocks[4].type, "section");
+    assert.deepEqual(
+      postedPayload.blocks.slice(5, 8).map(({ type }) => type),
+      ["section", "section", "section"],
+    );
     assert.match(
-      postedPayload.blocks[4].text.text,
-      /^\*YES probability history\*/m,
+      postedPayload.blocks[5].text.text,
+      /^\*All history\*/m,
     );
   } finally {
     await rm(directory, { recursive: true, force: true });

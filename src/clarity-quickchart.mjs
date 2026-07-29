@@ -6,6 +6,7 @@ import { downsample } from "./clarity-chart.mjs";
 
 export function createClarityQuickChartUrl(snapshot, {
   maxPoints = CLARITY_QUICKCHART.historyPoints,
+  periodLabel = "All history",
 } = {}) {
   const points = downsample(snapshot.history, maxPoints);
   if (points.length < 2) {
@@ -18,6 +19,11 @@ export function createClarityQuickChartUrl(snapshot, {
       ? formatDate(point.timestamp)
       : ""
   ));
+  for (let index = 0; index < labels.length - 1; index += 1) {
+    if (labels[index] && labels[index] === labels[index + 1]) {
+      labels[index] = "";
+    }
+  }
   const values = points.map((point) => (
     Number((point.probability * 100).toFixed(1))
   ));
@@ -49,7 +55,7 @@ export function createClarityQuickChartUrl(snapshot, {
         legend: { display: false },
         title: {
           display: true,
-          text: "CLARITY Act — YES probability",
+          text: `CLARITY Act — ${periodLabel}`,
           align: "start",
           color: "#111827",
           font: { size: 22, weight: "bold" },
@@ -57,7 +63,7 @@ export function createClarityQuickChartUrl(snapshot, {
         },
         subtitle: {
           display: true,
-          text: `Current YES ${currentPercent}%`,
+          text: `YES probability | Current ${currentPercent}%`,
           align: "start",
           color: "#4b5563",
           font: { size: 15 },

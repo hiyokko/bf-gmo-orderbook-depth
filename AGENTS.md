@@ -68,9 +68,13 @@ These instructions apply to the repository root and all descendants.
   spread report so Slack order is depth, spread, then CLARITY.
 - Resolve the CLARITY market and YES token from Polymarket's official Gamma API,
   and fetch its price history from the official CLOB API. Render the history as
-  a QuickChart image using a non-expiring URL under Slack's 3,000-character
-  limit. Do not use a short URL or API key. Fall back to the JSON-only Slack
-  Unicode area chart with a vertical probability axis when QuickChart fails.
+  all-history, trailing-30-day, and trailing-7-day QuickChart images using
+  non-expiring URLs under Slack's 3,000-character limit. Do not use a short URL
+  or API key. Fall back per period to the JSON-only Slack Unicode area chart
+  with a vertical probability axis when QuickChart fails.
+- Outside the CLARITY charts, show all-history, trailing-30-day,
+  trailing-7-day, and 24-hour relative change rates with probability-point
+  changes alongside them.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
 - Run `npm test`, `npm run dry-run`, `npm run spread:dry-run`, and
