@@ -50,9 +50,9 @@ watchdogの手動実行はデフォルトでdry-runです。Actions画面で `Ch
 [対象市場](https://polymarket.com/ja/event/clarity-act-signed-into-law-in-2026)
 の現在のYES確率、24時間変化、市場開始以来の確率推移を表示します。
 市場情報とYESトークンはPolymarket公式Gamma API、履歴は公式CLOB APIから
-取得します。チャートは履歴をUnicodeスパークラインへ変換してSlackの
-Block Kit JSON内に直接載せるため、QuickChartなどの外部画像サービスや
-追加Secretは使用しません。
+取得します。チャートは履歴を縦軸付きのUnicode面チャートへ変換して
+SlackのBlock Kit JSON内に直接載せるため、QuickChartなどの外部画像
+サービスや追加Secretは使用しません。
 
 ### スプレッド比較
 

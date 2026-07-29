@@ -41,7 +41,8 @@ test("CLARITY application saves JSON-only chart report without posting in dry-ru
     const saved = JSON.parse(await readFile(outputPath, "utf8"));
 
     assert.equal(result.report.slack.requested, false);
-    assert.match(saved.textChart, /current 29\.5%/);
+    assert.match(saved.textChart, /^100% ┤/);
+    assert.match(saved.textChart, /  0% └/);
     assert.doesNotMatch(JSON.stringify(saved), /quickchart|image_url/i);
   } finally {
     await rm(directory, { recursive: true, force: true });
@@ -69,7 +70,9 @@ test("CLARITY application posts Block Kit payload through the existing webhook",
 
     assert.equal(result.report.slack.posted, true);
     assert.match(postedPayload.text, /YES 29\.5%/);
-    assert.equal(postedPayload.blocks.length, 2);
+    assert.equal(postedPayload.blocks.length, 6);
+    assert.equal(postedPayload.blocks[0].type, "header");
+    assert.equal(postedPayload.blocks[4].type, "section");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

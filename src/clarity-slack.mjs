@@ -1,25 +1,56 @@
 export function createClaritySlackPayload(snapshot, textChart) {
   const currentPercent = snapshot.yesProbability * 100;
   const change24h = calculateChange(snapshot.history, 24 * 60 * 60);
-  const changeText = change24h === null
-    ? ""
-    : `  |  24h ${formatSigned(change24h * 100)}pt`;
+  const probabilities = snapshot.history.map(
+    (point) => point.probability * 100,
+  );
+  const minimum = Math.min(...probabilities);
+  const maximum = Math.max(...probabilities);
   const summary = `Polymarket CLARITY Act: YES ${currentPercent.toFixed(1)}%`;
-  const details = [
-    "*Polymarket — CLARITY Act*",
-    `<${snapshot.sourceUrl}|${escapeSlack(snapshot.title)}>`,
-    `*YES ${currentPercent.toFixed(1)}%*${changeText}`,
-  ].join("\n");
 
   return {
     text: summary,
     blocks: [
       {
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "Polymarket | CLARITY Act",
+          emoji: true,
+        },
+      },
+      {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: details,
+          text: `<${snapshot.sourceUrl}|${escapeSlack(snapshot.title)}>`,
         },
+      },
+      {
+        type: "section",
+        fields: [
+          {
+            type: "mrkdwn",
+            text: `*YES probability*\n\`${currentPercent.toFixed(1)}%\``,
+          },
+          {
+            type: "mrkdwn",
+            text: `*24h change*\n\`${formatChange(change24h)}\``,
+          },
+          {
+            type: "mrkdwn",
+            text: `*History range*\n\`${minimum.toFixed(1)}%–${
+              maximum.toFixed(1)
+            }%\``,
+          },
+          {
+            type: "mrkdwn",
+            text: `*Market status*\n\`${snapshot.closed ? "CLOSED" : "OPEN"}\``,
+          },
+        ],
+      },
+      {
+        type: "divider",
       },
       {
         type: "section",
@@ -27,6 +58,13 @@ export function createClaritySlackPayload(snapshot, textChart) {
           type: "mrkdwn",
           text: `*YES probability history*\n\`\`\`\n${textChart}\n\`\`\``,
         },
+      },
+      {
+        type: "context",
+        elements: [{
+          type: "mrkdwn",
+          text: `<${snapshot.sourceUrl}|View market on Polymarket>`,
+        }],
       },
     ],
   };
@@ -42,8 +80,11 @@ export function calculateChange(history, seconds) {
   return reference ? latest.probability - reference.probability : null;
 }
 
-function formatSigned(value) {
-  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+function formatChange(change) {
+  if (change === null) return "—";
+  const pointChange = change * 100;
+  const direction = pointChange > 0 ? "▲" : pointChange < 0 ? "▼" : "→";
+  return `${direction} ${Math.abs(pointChange).toFixed(1)} pt`;
 }
 
 function escapeSlack(value) {

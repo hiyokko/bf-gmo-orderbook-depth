@@ -1,24 +1,38 @@
 import { CLARITY_MARKET } from "./config.mjs";
 
-const LEVELS = [..."▁▂▃▄▅▆▇█"];
+const VERTICAL_BLOCKS = [..." ▁▂▃▄▅▆▇█"];
 
 export function createClarityTextChart(snapshot, {
-  width = CLARITY_MARKET.sparklineWidth,
+  width = CLARITY_MARKET.chartWidth,
+  height = CLARITY_MARKET.chartHeight,
 } = {}) {
-  const points = downsample(snapshot.history, width);
+  const chartWidth = Math.max(8, Math.trunc(Number(width) || 8));
+  const chartHeight = Math.max(4, Math.trunc(Number(height) || 4));
+  const points = downsample(snapshot.history, chartWidth);
   const probabilities = points.map((point) => point.probability);
-  const sparkline = probabilities.map(toLevel).join("");
   const first = points[0];
   const last = points.at(-1);
-  const minimum = Math.min(...probabilities) * 100;
-  const maximum = Math.max(...probabilities) * 100;
+  const rows = Array.from({ length: chartHeight }, (_, rowIndex) => {
+    const axisPercent = Math.round(
+      (chartHeight - rowIndex) / chartHeight * 100,
+    );
+    const cells = probabilities.map((probability) => (
+      toAreaCell(probability, rowIndex, chartHeight)
+    )).join("");
+    return `${String(axisPercent).padStart(3)}% ┤${cells}`;
+  });
+  const axisPrefix = "     ";
+  const startDate = formatShortDate(first.timestamp);
+  const endDate = formatShortDate(last.timestamp);
+  const dateGap = Math.max(
+    1,
+    chartWidth - startDate.length - endDate.length,
+  );
 
   return [
-    sparkline,
-    `${formatDate(first.timestamp)} → ${formatDate(last.timestamp)}`,
-    `range ${minimum.toFixed(1)}%–${maximum.toFixed(1)}% | current ${
-      (snapshot.yesProbability * 100).toFixed(1)
-    }%`,
+    ...rows,
+    `  0% └${"─".repeat(chartWidth)}`,
+    `${axisPrefix}${startDate}${" ".repeat(dateGap)}${endDate}`,
   ].join("\n");
 }
 
@@ -35,16 +49,17 @@ export function downsample(points, maxPoints) {
   return selected;
 }
 
-function toLevel(probability) {
+function toAreaCell(probability, rowIndex, height) {
   const normalized = Math.min(1, Math.max(0, Number(probability)));
-  const index = Math.min(
-    LEVELS.length - 1,
-    Math.floor(normalized * LEVELS.length),
-  );
-  return LEVELS[index];
+  const filledHeight = normalized * height;
+  const rowBottom = height - rowIndex - 1;
+  const fraction = filledHeight - rowBottom;
+  if (fraction <= 0) return VERTICAL_BLOCKS[0];
+  if (fraction >= 1) return VERTICAL_BLOCKS.at(-1);
+  return VERTICAL_BLOCKS[Math.ceil(fraction * 8)];
 }
 
-function formatDate(timestamp) {
+function formatShortDate(timestamp) {
   const date = new Date(timestamp * 1000);
-  return `${date.getUTCFullYear()}/${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
+  return `${date.getUTCMonth() + 1}/${date.getUTCDate()}`;
 }

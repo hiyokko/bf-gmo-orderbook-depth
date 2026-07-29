@@ -25,7 +25,8 @@ export const CLARITY_MARKET = Object.freeze({
   historyUrl: "https://clob.polymarket.com/prices-history",
   historyInterval: "max",
   historyFidelityMinutes: 1440,
-  sparklineWidth: 48,
+  chartWidth: 36,
+  chartHeight: 8,
 });
 
 export const SPREAD_MARKETS = Object.freeze({

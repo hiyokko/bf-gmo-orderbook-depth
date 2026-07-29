@@ -92,13 +92,21 @@ test("Slack payload renders a JSON-only text chart without external images", () 
       { timestamp: 1_785_326_400, probability: 0.295 },
     ],
   };
-  const textChart = createClarityTextChart(snapshot, { width: 3 });
+  const textChart = createClarityTextChart(snapshot, {
+    width: 12,
+    height: 4,
+  });
   const payload = createClaritySlackPayload(snapshot, textChart);
 
-  assert.match(textChart, /[▁▂▃▄▅▆▇█]{3}/u);
-  assert.match(textChart, /current 29\.5%/);
+  assert.match(textChart, /^100% ┤/u);
+  assert.match(textChart, /  0% └─{12}/u);
+  assert.match(textChart, /[▁▂▃▄▅▆▇█]/u);
+  assert.match(textChart, /7\/27\s+7\/29/u);
   assert.match(payload.text, /YES 29\.5%/);
-  assert.match(payload.blocks[1].text.text, /YES probability history/);
+  assert.equal(payload.blocks[0].type, "header");
+  assert.match(payload.blocks[2].fields[0].text, /29\.5%/);
+  assert.match(payload.blocks[2].fields[1].text, /▼ 7\.5 pt/);
+  assert.match(payload.blocks[4].text.text, /YES probability history/);
   assert.doesNotMatch(JSON.stringify(payload), /image_url|quickchart/i);
   assert.ok(Math.abs(calculateChange(snapshot.history, 86_400) + 0.075) < 1e-12);
 });
