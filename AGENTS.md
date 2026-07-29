@@ -79,6 +79,10 @@ These instructions apply to the repository root and all descendants.
 - Outside the CLARITY charts, show all-history, trailing-30-day,
   trailing-7-day, and 24-hour relative change rates with probability-point
   changes alongside them.
+- Fetch CLARITY legislative status from the official GovInfo Bill Status XML.
+  Display only explicitly allow-listed action patterns using deterministic
+  wording. Never generate or infer a weekly political narrative; omit the
+  status block when fetching or classification fails.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
 - Run `npm test`, `npm run dry-run`, `npm run spread:dry-run`, and
