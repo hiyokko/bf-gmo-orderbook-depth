@@ -50,9 +50,10 @@ watchdogの手動実行はデフォルトでdry-runです。Actions画面で `Ch
 [対象市場](https://polymarket.com/ja/event/clarity-act-signed-into-law-in-2026)
 の現在のYES確率、24時間変化、市場開始以来の確率推移を表示します。
 市場情報とYESトークンはPolymarket公式Gamma API、履歴は公式CLOB APIから
-取得します。チャートは履歴を縦軸付きのUnicode面チャートへ変換して
-SlackのBlock Kit JSON内に直接載せるため、QuickChartなどの外部画像
-サービスや追加Secretは使用しません。
+取得します。履歴を36点へ間引き、QuickChartで0〜100%の縦軸付き画像を
+生成してSlackへ載せます。短縮URLやAPIキーは使わず、画像URLはSlackの
+3,000文字制限内に収めます。QuickChartが応答しない場合は、縦軸付きの
+Unicode面チャートへ自動的にフォールバックします。
 
 ### スプレッド比較
 
@@ -176,6 +177,7 @@ npm test
 - `src/report-order.mjs`: スプレッド投稿前の板Depth完了待機
 - `src/polymarket.mjs`: CLARITY市場・YESトークン・価格履歴の取得
 - `src/clarity-chart.mjs`: JSON用Unicode確率チャート
+- `src/clarity-quickchart.mjs`: QuickChart画像URLと事前確認
 - `src/clarity-slack.mjs`: CLARITY ActのBlock Kit表示
 - `src/clarity-application.mjs`: CLARITYレポートの実行制御
 - `src/spread-sources.mjs`: SBIVC現行一覧と各社2-wayレートの取得・変換

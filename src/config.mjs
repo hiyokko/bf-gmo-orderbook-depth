@@ -29,6 +29,15 @@ export const CLARITY_MARKET = Object.freeze({
   chartHeight: 8,
 });
 
+export const CLARITY_QUICKCHART = Object.freeze({
+  endpoint: "https://quickchart.io/chart",
+  historyPoints: 36,
+  width: 900,
+  height: 460,
+  devicePixelRatio: 2,
+  maxUrlLength: 3_000,
+});
+
 export const SPREAD_MARKETS = Object.freeze({
   spot: Object.freeze([
     Object.freeze({ id: "sbivc", label: "SBI VC" }),

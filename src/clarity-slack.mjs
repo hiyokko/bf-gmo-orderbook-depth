@@ -1,4 +1,6 @@
-export function createClaritySlackPayload(snapshot, textChart) {
+export function createClaritySlackPayload(snapshot, textChart, {
+  imageUrl = null,
+} = {}) {
   const currentPercent = snapshot.yesProbability * 100;
   const change24h = calculateChange(snapshot.history, 24 * 60 * 60);
   const probabilities = snapshot.history.map(
@@ -53,11 +55,24 @@ export function createClaritySlackPayload(snapshot, textChart) {
         type: "divider",
       },
       {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `*YES probability history*\n\`\`\`\n${textChart}\n\`\`\``,
-        },
+        ...(imageUrl
+          ? {
+              type: "image",
+              image_url: imageUrl,
+              alt_text: "CLARITY Act YES probability history chart",
+              title: {
+                type: "plain_text",
+                text: "YES probability history",
+                emoji: true,
+              },
+            }
+          : {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `*YES probability history*\n\`\`\`\n${textChart}\n\`\`\``,
+              },
+            }),
       },
       {
         type: "context",

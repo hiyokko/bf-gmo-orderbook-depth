@@ -2,6 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createClarityTextChart } from "../src/clarity-chart.mjs";
 import {
+  createClarityQuickChartUrl,
+  verifyQuickChartImage,
+} from "../src/clarity-quickchart.mjs";
+import {
   calculateChange,
   createClaritySlackPayload,
 } from "../src/clarity-slack.mjs";
@@ -82,7 +86,30 @@ test("price history is normalized, sorted, and ends at current probability", () 
   ]);
 });
 
-test("Slack payload renders a JSON-only text chart without external images", () => {
+test("QuickChart URL contains a compact vertical chart without credentials", () => {
+  const snapshot = {
+    ...parseClarityEvent(EVENT),
+    sourceUrl: "https://polymarket.com/ja/event/test",
+    history: [
+      { timestamp: 1_785_153_600, probability: 0.42 },
+      { timestamp: 1_785_240_000, probability: 0.37 },
+      { timestamp: 1_785_326_400, probability: 0.295 },
+    ],
+  };
+  const imageUrl = createClarityQuickChartUrl(snapshot);
+  const parsedUrl = new URL(imageUrl);
+  const chart = JSON.parse(parsedUrl.searchParams.get("chart"));
+
+  assert.equal(parsedUrl.origin, "https://quickchart.io");
+  assert.ok(imageUrl.length < 3_000);
+  assert.equal(chart.type, "line");
+  assert.equal(chart.options.scales.y.min, 0);
+  assert.equal(chart.options.scales.y.max, 100);
+  assert.deepEqual(chart.data.datasets[0].data, [42, 37, 29.5]);
+  assert.doesNotMatch(imageUrl, /key|token|secret/i);
+});
+
+test("Slack payload uses the QuickChart image and keeps text fallback", () => {
   const snapshot = {
     ...parseClarityEvent(EVENT),
     sourceUrl: "https://polymarket.com/ja/event/test",
@@ -96,7 +123,9 @@ test("Slack payload renders a JSON-only text chart without external images", () 
     width: 12,
     height: 4,
   });
-  const payload = createClaritySlackPayload(snapshot, textChart);
+  const imageUrl = createClarityQuickChartUrl(snapshot);
+  const payload = createClaritySlackPayload(snapshot, textChart, { imageUrl });
+  const fallback = createClaritySlackPayload(snapshot, textChart);
 
   assert.match(textChart, /^100% ┤/u);
   assert.match(textChart, /  0% └─{12}/u);
@@ -106,7 +135,35 @@ test("Slack payload renders a JSON-only text chart without external images", () 
   assert.equal(payload.blocks[0].type, "header");
   assert.match(payload.blocks[2].fields[0].text, /29\.5%/);
   assert.match(payload.blocks[2].fields[1].text, /▼ 7\.5 pt/);
-  assert.match(payload.blocks[4].text.text, /YES probability history/);
-  assert.doesNotMatch(JSON.stringify(payload), /image_url|quickchart/i);
+  assert.equal(payload.blocks[4].type, "image");
+  assert.equal(payload.blocks[4].image_url, imageUrl);
+  assert.match(fallback.blocks[4].text.text, /YES probability history/);
   assert.ok(Math.abs(calculateChange(snapshot.history, 86_400) + 0.075) < 1e-12);
+});
+
+test("QuickChart verifier accepts only a successful PNG response", async () => {
+  const result = await verifyQuickChartImage(
+    "https://quickchart.io/chart?chart=test",
+    {
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "image/png" }),
+        body: null,
+      }),
+    },
+  );
+
+  assert.equal(result.status, 200);
+  await assert.rejects(
+    verifyQuickChartImage("https://quickchart.io/chart?chart=test", {
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        headers: new Headers({ "content-type": "text/plain" }),
+        body: null,
+      }),
+    }),
+    /unexpected content type/,
+  );
 });

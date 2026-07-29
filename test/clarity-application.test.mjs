@@ -25,7 +25,7 @@ const SNAPSHOT = {
   ],
 };
 
-test("CLARITY application saves JSON-only chart report without posting in dry-run", async () => {
+test("CLARITY application saves a QuickChart preview without posting in dry-run", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "clarity-report-"));
   const outputPath = path.join(directory, "latest.json");
   try {
@@ -41,9 +41,11 @@ test("CLARITY application saves JSON-only chart report without posting in dry-ru
     const saved = JSON.parse(await readFile(outputPath, "utf8"));
 
     assert.equal(result.report.slack.requested, false);
+    assert.equal(result.report.quickChart.included, true);
+    assert.equal(result.report.quickChart.verified, null);
+    assert.match(result.report.quickChart.url, /^https:\/\/quickchart\.io\//);
     assert.match(saved.textChart, /^100% ┤/);
     assert.match(saved.textChart, /  0% └/);
-    assert.doesNotMatch(JSON.stringify(saved), /quickchart|image_url/i);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -58,7 +60,15 @@ test("CLARITY application posts Block Kit payload through the existing webhook",
       outputPath,
       webhookUrl: "https://hooks.slack.com/services/T111/B222/secret",
       fetchMarketImpl: async () => SNAPSHOT,
-      fetchImpl: async (_url, options) => {
+      fetchImpl: async (url, options) => {
+        if (String(url).startsWith("https://quickchart.io/")) {
+          return {
+            ok: true,
+            status: 200,
+            headers: new Headers({ "content-type": "image/png" }),
+            body: null,
+          };
+        }
         postedPayload = JSON.parse(options.body);
         return {
           ok: true,
@@ -72,7 +82,48 @@ test("CLARITY application posts Block Kit payload through the existing webhook",
     assert.match(postedPayload.text, /YES 29\.5%/);
     assert.equal(postedPayload.blocks.length, 6);
     assert.equal(postedPayload.blocks[0].type, "header");
+    assert.equal(postedPayload.blocks[4].type, "image");
+    assert.equal(result.report.quickChart.verified, true);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("CLARITY application falls back to text when QuickChart is unavailable", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "clarity-report-"));
+  const outputPath = path.join(directory, "latest.json");
+  let postedPayload;
+  try {
+    const result = await runClarityReport({
+      outputPath,
+      webhookUrl: "https://hooks.slack.com/services/T111/B222/secret",
+      fetchMarketImpl: async () => SNAPSHOT,
+      fetchImpl: async (url, options) => {
+        if (String(url).startsWith("https://quickchart.io/")) {
+          return {
+            ok: false,
+            status: 503,
+            headers: new Headers(),
+            body: null,
+          };
+        }
+        postedPayload = JSON.parse(options.body);
+        return {
+          ok: true,
+          status: 200,
+          text: async () => "ok",
+        };
+      },
+    });
+
+    assert.equal(result.report.slack.posted, true);
+    assert.equal(result.report.quickChart.verified, false);
+    assert.match(result.report.quickChart.error, /HTTP 503/);
     assert.equal(postedPayload.blocks[4].type, "section");
+    assert.match(
+      postedPayload.blocks[4].text.text,
+      /^\*YES probability history\*/m,
+    );
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

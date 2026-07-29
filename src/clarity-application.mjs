@@ -1,6 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createClarityTextChart } from "./clarity-chart.mjs";
+import {
+  createClarityQuickChartUrl,
+  verifyQuickChartImage,
+} from "./clarity-quickchart.mjs";
 import { createClaritySlackPayload } from "./clarity-slack.mjs";
 import { fetchClarityMarket } from "./polymarket.mjs";
 import { postPayloadToSlack } from "./slack.mjs";
@@ -17,7 +21,34 @@ export async function runClarityReport({
 
   const snapshot = await fetchMarketImpl({ fetchImpl, fetchedAt });
   const textChart = createClarityTextChart(snapshot);
-  const slackPayload = createClaritySlackPayload(snapshot, textChart);
+  const quickChart = {
+    url: null,
+    verified: null,
+    included: false,
+    error: null,
+  };
+  let imageUrl = null;
+  try {
+    quickChart.url = createClarityQuickChartUrl(snapshot);
+    imageUrl = quickChart.url;
+  } catch (error) {
+    quickChart.error = toError(error).message;
+  }
+
+  if (!dryRun && imageUrl) {
+    try {
+      await verifyQuickChartImage(imageUrl, { fetchImpl });
+      quickChart.verified = true;
+    } catch (error) {
+      quickChart.verified = false;
+      quickChart.error = toError(error).message;
+      imageUrl = null;
+    }
+  }
+  quickChart.included = Boolean(imageUrl);
+  const slackPayload = createClaritySlackPayload(snapshot, textChart, {
+    imageUrl,
+  });
   const slack = {
     requested: !dryRun,
     posted: false,
@@ -44,6 +75,7 @@ export async function runClarityReport({
     fetchedAt: fetchedAt.toISOString(),
     market: snapshot,
     textChart,
+    quickChart,
     slack,
   };
   await saveJson(report, outputPath);
@@ -54,4 +86,8 @@ export async function runClarityReport({
 async function saveJson(report, outputPath) {
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+}
+
+function toError(error) {
+  return error instanceof Error ? error : new Error(String(error));
 }
