@@ -60,8 +60,8 @@ export const CLARITY_QUICKCHART = Object.freeze({
   historyPoints: 60,
   width: 900,
   height: 460,
-  devicePixelRatio: 2,
-  maxUrlLength: 3_000,
+  devicePixelRatio: 1,
+  maxUrlLength: 2_000,
 });
 
 export const CLARITY_LEGISLATION = Object.freeze({

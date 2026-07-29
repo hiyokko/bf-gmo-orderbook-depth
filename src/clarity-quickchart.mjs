@@ -33,41 +33,25 @@ export function createClarityQuickChartUrl(snapshot, {
     data: {
       labels,
       datasets: [{
-        label: "YES probability",
         data: values,
         borderColor: "#2563eb",
-        backgroundColor: "rgba(37,99,235,0.16)",
+        backgroundColor: "#dbeafe",
         borderWidth: 3,
-        pointRadius: values.map((_, index) => (
-          index === values.length - 1 ? 6 : 0
-        )),
-        pointBackgroundColor: "#2563eb",
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 3,
-        pointHitRadius: 8,
+        pointRadius: 0,
         fill: true,
         tension: 0,
       }],
     },
     options: {
-      animation: false,
       plugins: {
         legend: { display: false },
         title: {
           display: true,
           text: `CLARITY Act — ${periodLabel}`,
-          align: "start",
-          color: "#111827",
-          font: { size: 22, weight: "bold" },
-          padding: { bottom: 4 },
         },
         subtitle: {
           display: true,
           text: `YES probability | Current ${currentPercent}%`,
-          align: "start",
-          color: "#4b5563",
-          font: { size: 15 },
-          padding: { bottom: 18 },
         },
       },
       scales: {
@@ -75,38 +59,34 @@ export function createClarityQuickChartUrl(snapshot, {
           grid: { display: false },
           ticks: {
             autoSkip: false,
-            color: "#6b7280",
             maxRotation: 0,
           },
         },
         y: {
           min: 0,
           max: 100,
-          grid: { color: "#e5e7eb" },
           ticks: {
-            color: "#6b7280",
             stepSize: 20,
           },
           title: {
             display: true,
             text: "Probability (%)",
-            color: "#6b7280",
           },
         },
       },
     },
   };
   const url = new URL(CLARITY_QUICKCHART.endpoint);
-  url.searchParams.set("chart", JSON.stringify(chart));
-  url.searchParams.set("width", String(CLARITY_QUICKCHART.width));
-  url.searchParams.set("height", String(CLARITY_QUICKCHART.height));
+  url.searchParams.set("c", JSON.stringify(chart));
+  url.searchParams.set("w", String(CLARITY_QUICKCHART.width));
+  url.searchParams.set("h", String(CLARITY_QUICKCHART.height));
   url.searchParams.set(
     "devicePixelRatio",
     String(CLARITY_QUICKCHART.devicePixelRatio),
   );
-  url.searchParams.set("backgroundColor", "#ffffff");
-  url.searchParams.set("version", "4");
-  url.searchParams.set("format", "png");
+  url.searchParams.set("bkg", "#ffffff");
+  url.searchParams.set("v", "4");
+  url.searchParams.set("f", "png");
 
   const imageUrl = url.toString();
   if (imageUrl.length > CLARITY_QUICKCHART.maxUrlLength) {

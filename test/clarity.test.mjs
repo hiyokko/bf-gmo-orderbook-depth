@@ -150,10 +150,11 @@ test("QuickChart URL contains a compact vertical chart without credentials", () 
   };
   const imageUrl = createClarityQuickChartUrl(snapshot);
   const parsedUrl = new URL(imageUrl);
-  const chart = JSON.parse(parsedUrl.searchParams.get("chart"));
+  const chart = JSON.parse(parsedUrl.searchParams.get("c"));
 
   assert.equal(parsedUrl.origin, "https://quickchart.io");
-  assert.ok(imageUrl.length < 3_000);
+  assert.ok(imageUrl.length < 2_000);
+  assert.equal(parsedUrl.searchParams.get("devicePixelRatio"), "1");
   assert.equal(chart.type, "line");
   assert.equal(chart.options.scales.y.min, 0);
   assert.equal(chart.options.scales.y.max, 100);
@@ -172,7 +173,7 @@ test("QuickChart suppresses a duplicate current-day axis label", () => {
     ],
   };
   const chart = JSON.parse(
-    new URL(createClarityQuickChartUrl(snapshot)).searchParams.get("chart"),
+    new URL(createClarityQuickChartUrl(snapshot)).searchParams.get("c"),
   );
 
   assert.deepEqual(chart.data.labels, ["7/28", "", "7/29"]);
@@ -190,10 +191,10 @@ test("QuickChart renders up to 60 points for detailed shorter periods", () => {
     maxPoints: 60,
     periodLabel: "Last 1 week",
   });
-  const chart = JSON.parse(new URL(imageUrl).searchParams.get("chart"));
+  const chart = JSON.parse(new URL(imageUrl).searchParams.get("c"));
 
   assert.equal(chart.data.datasets[0].data.length, 60);
-  assert.ok(imageUrl.length < 3_000);
+  assert.ok(imageUrl.length < 2_000);
 });
 
 test("CLARITY periods select all history, trailing month, and trailing week", () => {

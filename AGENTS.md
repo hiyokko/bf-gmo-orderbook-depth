@@ -69,9 +69,11 @@ These instructions apply to the repository root and all descendants.
 - Resolve the CLARITY market and YES token from Polymarket's official Gamma API,
   and fetch its price history from the official CLOB API. Render the history as
   all-history, trailing-30-day, and trailing-7-day QuickChart images using
-  non-expiring URLs under Slack's 3,000-character limit. Do not use a short URL
-  or API key. Fall back per period to the JSON-only Slack Unicode area chart
-  with a vertical probability axis when QuickChart fails.
+  non-expiring URLs under 2,000 characters, leaving headroom below Slack's
+  3,000-character limit. Render at 900x460 with a device pixel ratio of 1.
+  Do not use a short URL or API key. Fall back per period to the JSON-only
+  Slack Unicode area chart with a vertical probability axis when QuickChart
+  fails.
 - Fetch all-history at daily fidelity, trailing-30-day history at six-hour
   fidelity, and trailing-7-day history at hourly fidelity. Render up to 60
   points for each period using straight line segments with no curve smoothing.
