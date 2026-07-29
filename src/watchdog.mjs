@@ -18,6 +18,8 @@ export const WATCHDOG_TITLE_PREFIX = "Orderbook depth watchdog ";
 export const ORDERBOOK_WORKFLOW = WORKFLOWS.orderbook;
 export const SPREAD_WATCHDOG_TITLE_PREFIX = "Spread comparison watchdog ";
 export const SPREAD_COMPARISON_WORKFLOW = WORKFLOWS.spreadComparison;
+export const CLARITY_WATCHDOG_TITLE_PREFIX = "Polymarket CLARITY Act watchdog ";
+export const CLARITY_ACT_WORKFLOW = WORKFLOWS.clarityAct;
 
 export function latestScheduleTarget(now = Date.now()) {
   const nowMs = finiteTimestamp(now);

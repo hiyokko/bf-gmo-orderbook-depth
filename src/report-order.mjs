@@ -5,6 +5,7 @@ export async function waitForTargetSuccess({
   listRuns,
   target,
   titlePrefix,
+  dependencyLabel = "dependency report",
   timeoutMs = 360_000,
   pollIntervalMs = 10_000,
   nowImpl = Date.now,
@@ -36,7 +37,7 @@ export async function waitForTargetSuccess({
       const active = lastClassification.active.map(publicWorkflowRun);
       const unsuccessful = lastClassification.unsuccessful.map(publicWorkflowRun);
       throw new Error(
-        `Timed out waiting for the orderbook report for ${target.label}`
+        `Timed out waiting for the ${dependencyLabel} for ${target.label}`
         + ` (active=${active.length}, unsuccessful=${unsuccessful.length})`,
       );
     }

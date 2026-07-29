@@ -20,7 +20,7 @@ test("primary workflow uses the requested JST schedule and hardened permissions"
   assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
 });
 
-test("unified watchdog can recover both reports without receiving the Slack secret", async () => {
+test("unified watchdog can recover all reports without receiving the Slack secret", async () => {
   const workflow = await readFile(
     new URL("../.github/workflows/report-watchdog.yml", import.meta.url),
     "utf8",
@@ -32,6 +32,33 @@ test("unified watchdog can recover both reports without receiving the Slack secr
   assert.match(workflow, /WATCHDOG_DRY_RUN:/);
   assert.match(workflow, /npm run watchdog/);
   assert.doesNotMatch(workflow, /SLACK_WEBHOOK_URL|pull_request:|push:/);
+
+  const actionReferences = [...workflow.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
+  assert.ok(actionReferences.length >= 2);
+  assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
+});
+
+test("CLARITY Act workflow runs after spread and protects the Slack secret", async () => {
+  const workflow = await readFile(
+    new URL("../.github/workflows/clarity-act.yml", import.meta.url),
+    "utf8",
+  );
+  const watchdogScript = await readFile(
+    new URL("../scripts/run-watchdog.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(workflow, /cron: "0 1,9,17 \* \* \*"/);
+  assert.match(workflow, /timezone: "Asia\/Tokyo"/);
+  assert.match(workflow, /permissions:\n  actions: read\n  contents: read/);
+  assert.match(workflow, /SLACK_WEBHOOK_URL: \$\{\{ secrets\.SLACK_WEBHOOK_URL \}\}/);
+  assert.doesNotMatch(workflow, /pull_request:|push:/);
+  const waitIndex = workflow.indexOf("node scripts/wait-for-spread.mjs");
+  const postIndex = workflow.indexOf("npm run clarity\n");
+  assert.ok(waitIndex >= 0);
+  assert.ok(postIndex > waitIndex);
+  assert.match(workflow, /SPREAD_WAIT_TIMEOUT_MS: "480000"/);
+  assert.match(watchdogScript, /CLARITY_ACT_WORKFLOW/);
 
   const actionReferences = [...workflow.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
   assert.ok(actionReferences.length >= 2);

@@ -21,6 +21,7 @@ test("spread dependency accepts a successful orderbook run for the same slot", a
     }],
     target: TARGET,
     titlePrefix: WATCHDOG_TITLE_PREFIX,
+    dependencyLabel: "orderbook report",
   });
 
   assert.equal(result.attempts, 1);
@@ -44,6 +45,7 @@ test("spread dependency polls until the watchdog orderbook run completes", async
     },
     target: TARGET,
     titlePrefix: WATCHDOG_TITLE_PREFIX,
+    dependencyLabel: "orderbook report",
     timeoutMs: 60_000,
     pollIntervalMs: 10_000,
     nowImpl: () => elapsedMs,
@@ -63,6 +65,7 @@ test("spread dependency times out without a successful orderbook run", async () 
       listRuns: async () => [],
       target: TARGET,
       titlePrefix: WATCHDOG_TITLE_PREFIX,
+      dependencyLabel: "orderbook report",
       timeoutMs: 20_000,
       pollIntervalMs: 10_000,
       nowImpl: () => elapsedMs,

@@ -4,6 +4,8 @@ import {
   recoverReports,
 } from "../src/watchdog-application.mjs";
 import {
+  CLARITY_ACT_WORKFLOW,
+  CLARITY_WATCHDOG_TITLE_PREFIX,
   ORDERBOOK_WORKFLOW,
   SPREAD_COMPARISON_WORKFLOW,
   SPREAD_WATCHDOG_TITLE_PREFIX,
@@ -23,6 +25,12 @@ const REPORTS = Object.freeze([
     label: "Spread comparison",
     workflow: SPREAD_COMPARISON_WORKFLOW,
     titlePrefix: SPREAD_WATCHDOG_TITLE_PREFIX,
+  }),
+  Object.freeze({
+    id: "clarityAct",
+    label: "Polymarket CLARITY Act",
+    workflow: CLARITY_ACT_WORKFLOW,
+    titlePrefix: CLARITY_WATCHDOG_TITLE_PREFIX,
   }),
 ]);
 

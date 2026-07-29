@@ -15,6 +15,17 @@ export const ORDERBOOK_SCHEDULE = Object.freeze({
 export const WORKFLOWS = Object.freeze({
   orderbook: "orderbook-depth.yml",
   spreadComparison: "spread-comparison.yml",
+  clarityAct: "clarity-act.yml",
+});
+
+export const CLARITY_MARKET = Object.freeze({
+  slug: "clarity-act-signed-into-law-in-2026",
+  pageUrl: "https://polymarket.com/ja/event/clarity-act-signed-into-law-in-2026",
+  gammaUrl: "https://gamma-api.polymarket.com/events/slug/clarity-act-signed-into-law-in-2026",
+  historyUrl: "https://clob.polymarket.com/prices-history",
+  historyInterval: "max",
+  historyFidelityMinutes: 1440,
+  sparklineWidth: 48,
 });
 
 export const SPREAD_MARKETS = Object.freeze({

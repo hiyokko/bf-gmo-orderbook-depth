@@ -63,9 +63,16 @@ These instructions apply to the repository root and all descendants.
 - Before a scheduled or watchdog-triggered spread post, wait for the matching
   orderbook-depth slot to complete successfully so Slack order is always depth,
   then spread. Manual spread tests remain independent.
+- Monitor the Polymarket CLARITY Act report with the same unified watchdog.
+  Before a scheduled or watchdog-triggered CLARITY post, wait for the matching
+  spread report so Slack order is depth, spread, then CLARITY.
+- Resolve the CLARITY market and YES token from Polymarket's official Gamma API,
+  and fetch its price history from the official CLOB API. Render the history as
+  a JSON-only Slack Unicode sparkline; do not depend on an external chart host.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
-- Run `npm test`, `npm run dry-run`, and `npm run spread:dry-run` after code or workflow changes.
+- Run `npm test`, `npm run dry-run`, `npm run spread:dry-run`, and
+  `npm run clarity:dry-run` after code or workflow changes.
 
 ## Public-repository security
 

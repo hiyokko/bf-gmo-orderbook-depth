@@ -5,6 +5,7 @@ import {
   recoverReports,
 } from "../src/watchdog-application.mjs";
 import {
+  CLARITY_WATCHDOG_TITLE_PREFIX,
   SPREAD_WATCHDOG_TITLE_PREFIX,
   WATCHDOG_TITLE_PREFIX,
   parseWatchdogTarget,
@@ -23,6 +24,12 @@ const REPORTS = [
     label: "Spread comparison",
     workflow: "spread-comparison.yml",
     titlePrefix: SPREAD_WATCHDOG_TITLE_PREFIX,
+  },
+  {
+    id: "clarityAct",
+    label: "Polymarket CLARITY Act",
+    workflow: "clarity-act.yml",
+    titlePrefix: CLARITY_WATCHDOG_TITLE_PREFIX,
   },
 ];
 
@@ -48,10 +55,12 @@ test("unified watchdog dispatches each missing report independently", async () =
   assert.deepEqual(results.map((result) => result.status), [
     "dispatched",
     "dispatched",
+    "dispatched",
   ]);
   assert.deepEqual(dispatches.map(({ workflow }) => workflow), [
     "orderbook-depth.yml",
     "spread-comparison.yml",
+    "clarity-act.yml",
   ]);
   assert.equal(hasRecoveryFailures(results), false);
 });
@@ -79,5 +88,6 @@ test("one report failure does not block recovery of the other", async () => {
   assert.equal(results[0].status, "failed");
   assert.match(results[0].error, /history unavailable/);
   assert.equal(results[1].status, "dispatched");
+  assert.equal(results[2].status, "dispatched");
   assert.equal(hasRecoveryFailures(results), true);
 });

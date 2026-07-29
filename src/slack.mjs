@@ -49,17 +49,27 @@ export async function postToSlack(text, webhookUrl, {
   fetchImpl = globalThis.fetch,
   timeoutMs = RUNTIME_DEFAULTS.requestTimeoutMs,
 } = {}) {
+  return postPayloadToSlack({ text }, webhookUrl, { fetchImpl, timeoutMs });
+}
+
+export async function postPayloadToSlack(payload, webhookUrl, {
+  fetchImpl = globalThis.fetch,
+  timeoutMs = RUNTIME_DEFAULTS.requestTimeoutMs,
+} = {}) {
   if (!validateWebhookUrl(webhookUrl)) {
     throw new Error("Slack Webhook URL is missing or invalid");
   }
   if (typeof fetchImpl !== "function") {
     throw new Error("Fetch API is unavailable");
   }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new Error("Slack payload must be an object");
+  }
 
   const response = await fetchImpl(webhookUrl.trim(), {
     method: "POST",
     headers: { "content-type": "application/json; charset=utf-8" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(timeoutMs),
   });
   const responseBody = await response.text();

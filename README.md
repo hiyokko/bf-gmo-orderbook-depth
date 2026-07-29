@@ -1,15 +1,17 @@
-# 暗号資産スプレッド比較・レバBTC板Depth
+# 暗号資産スプレッド比較・レバBTC板Depth・Polymarket
 
-次の2種類のレポートを公開APIから作成し、Slackへ投稿します。
+次の3種類のレポートを公開APIから作成し、Slackへ投稿します。
 
 [![Orderbook depth](https://github.com/hiyokko/bf-gmo-orderbook-depth/actions/workflows/orderbook-depth.yml/badge.svg)](https://github.com/hiyokko/bf-gmo-orderbook-depth/actions/workflows/orderbook-depth.yml)
 [![Spread comparison](https://github.com/hiyokko/bf-gmo-orderbook-depth/actions/workflows/spread-comparison.yml/badge.svg)](https://github.com/hiyokko/bf-gmo-orderbook-depth/actions/workflows/spread-comparison.yml)
+[![Polymarket CLARITY Act](https://github.com/hiyokko/bf-gmo-orderbook-depth/actions/workflows/clarity-act.yml/badge.svg)](https://github.com/hiyokko/bf-gmo-orderbook-depth/actions/workflows/clarity-act.yml)
 
 - bitFlyer Crypto CFD (`FX_BTC_JPY`) とGMOコインのレバレッジBTC
   (`BTC_JPY`) の0.1 / 0.3 / 0.5 / 1 / 3 BTC板Depth
 - SBIVCの現在取扱銘柄を基準にしたスプレッド比較
   - 現物: SBI VC / bb / bF / CC / GMO / OKJ
   - レバレッジ: SBI VC / bF / GMO
+- Polymarketの「CLARITY Actが2026年に署名・成立する」YES確率と推移
 
 ## 実行スケジュール
 
@@ -22,14 +24,17 @@ GitHub Actionsが次の時刻に自動実行します。
 ワークフローではIANAタイムゾーン `Asia/Tokyo` を指定し、毎日8時間間隔で実行します。GitHub Actionsの混雑状況により、実際の開始が数分以上遅れることがあります。
 
 板Depthは `orderbook-depth.yml`、スプレッド比較は
-`spread-comparison.yml` がそれぞれ独立して実行します。
+`spread-comparison.yml`、CLARITY Actは `clarity-act.yml` が
+それぞれ独立して実行します。
 定時実行とwatchdog復旧では、スプレッド比較が同じ定時枠の板Depth成功を
-確認してから投稿するため、Slack上の順番は必ず「板Depth → スプレッド比較」
-になります。手動テストはそれぞれ単独で実行できます。
+確認し、CLARITY Actがスプレッド比較の成功を確認してから投稿します。
+Slack上の順番は必ず
+「板Depth → スプレッド比較 → Polymarket CLARITY Act」になります。
+手動テストはそれぞれ単独で実行できます。
 
 ### Watchdog
 
-`.github/workflows/report-watchdog.yml` が毎時 `07 / 17 / 27 / 37 / 47 / 57` 分に直近の定時枠を確認します。定時から20分以上経過しても、その枠の正常完了または実行中の記録がなければ、`orderbook-depth.yml` と `spread-comparison.yml` のうち未完了のものだけをバックアップ実行します。6時間を超えた古い枠は追いかけません。
+`.github/workflows/report-watchdog.yml` が毎時 `07 / 17 / 27 / 37 / 47 / 57` 分に直近の定時枠を確認します。定時から20分以上経過しても、その枠の正常完了または実行中の記録がなければ、3種類のレポートのうち未完了のものだけをバックアップ実行します。6時間を超えた古い枠は追いかけません。
 
 2種類のレポートは個別に判定・再実行されるため、片方の確認やdispatchが
 失敗しても、もう片方の復旧処理は継続します。
@@ -39,6 +44,15 @@ GitHub Actionsが次の時刻に自動実行します。
 watchdogの手動実行はデフォルトでdry-runです。Actions画面で `Check only; do not dispatch...` をオフにした場合だけ、未完了枠を実際にバックアップ実行します。
 
 ## Slackに表示する内容
+
+### Polymarket CLARITY Act
+
+[対象市場](https://polymarket.com/ja/event/clarity-act-signed-into-law-in-2026)
+の現在のYES確率、24時間変化、市場開始以来の確率推移を表示します。
+市場情報とYESトークンはPolymarket公式Gamma API、履歴は公式CLOB APIから
+取得します。チャートは履歴をUnicodeスパークラインへ変換してSlackの
+Block Kit JSON内に直接載せるため、QuickChartなどの外部画像サービスや
+追加Secretは使用しません。
 
 ### スプレッド比較
 
@@ -101,8 +115,8 @@ Secretの値は公開リポジトリ、Git履歴、Actionsログには表示さ�
 
 ## 手動実行
 
-リポジトリの `Actions` から `Orderbook depth` または
-`Spread comparison` を選び、`Run workflow` で実行できます。
+リポジトリの `Actions` から `Orderbook depth`、`Spread comparison`、
+または `Polymarket CLARITY Act` を選び、`Run workflow` で実行できます。
 
 - `Post result to Slack` がオフ: API取得と計算だけを実行
 - `Post result to Slack` がオン: Slackへテスト投稿
@@ -125,6 +139,7 @@ chmod 600 .env
 ```bash
 npm run dry-run
 npm run spread:dry-run
+npm run clarity:dry-run
 ```
 
 Slackへ投稿:
@@ -132,6 +147,7 @@ Slackへ投稿:
 ```bash
 npm start
 npm run spread
+npm run clarity
 ```
 
 テスト:
@@ -141,7 +157,8 @@ npm test
 ```
 
 最新結果は板Depthが `output/latest.json`、スプレッド比較が
-`output/spread-latest.json` に保存されます。このディレクトリと `.env`
+`output/spread-latest.json`、CLARITY Actが
+`output/clarity-latest.json` に保存されます。このディレクトリと `.env`
 はGitから除外されます。
 
 ## コード構成
@@ -157,6 +174,10 @@ npm test
 - `src/watchdog.mjs`: 定時枠、実行履歴分類、復旧判断
 - `src/watchdog-application.mjs`: 2レポートの独立した監視・復旧制御
 - `src/report-order.mjs`: スプレッド投稿前の板Depth完了待機
+- `src/polymarket.mjs`: CLARITY市場・YESトークン・価格履歴の取得
+- `src/clarity-chart.mjs`: JSON用Unicode確率チャート
+- `src/clarity-slack.mjs`: CLARITY ActのBlock Kit表示
+- `src/clarity-application.mjs`: CLARITYレポートの実行制御
 - `src/spread-sources.mjs`: SBIVC現行一覧と各社2-wayレートの取得・変換
 - `src/spread-comparison.mjs`: スプレッド計算と比較表データ
 - `src/spread-slack.mjs`: 4種類のSlack比較表
@@ -187,5 +208,6 @@ npm test
 - [bitFlyer販売所](https://bitflyer.com/ja-jp/ex/buysell)
 - [GMOコイン API](https://api.coin.z.com/docs/)
 - [Coincheck価格一覧](https://coincheck.com/ja/exchange/prices)
+- [Polymarket API](https://docs.polymarket.com/)
 
 板は取得直後から変化するため、結果はスナップショットとして扱ってください。手数料・資金調達料・取得後の価格変動は計算に含みません。
