@@ -63,11 +63,6 @@ QuickChartが応答しない場合は、該当期間だけ縦軸付きのUnicode
 併記します。
 1ヶ月・1週間の詳細履歴APIだけが失敗した場合は、全期間の日次履歴から
 該当期間を切り出して投稿を継続します。
-法案の現状はGovInfoの公式Bill Status XMLから取得します。現在の
-公式アクションを既知の定型パターンで判定できた場合だけ表示し、AIによる
-要約は行いません。取得失敗や未知の状態では、誤表示を避けるため現状欄を
-省略して確率レポートだけ投稿します。
-
 ### スプレッド比較
 
 Excelの `CompareSheets` と同じ定義で、次の4表を出力します。
@@ -189,7 +184,6 @@ npm test
 - `src/watchdog-application.mjs`: 2レポートの独立した監視・復旧制御
 - `src/report-order.mjs`: スプレッド投稿前の板Depth完了待機
 - `src/polymarket.mjs`: CLARITY市場・YESトークン・価格履歴の取得
-- `src/clarity-legislation.mjs`: GovInfo公式法案ステータスの安全な定型表示
 - `src/clarity-metrics.mjs`: 期間・24時間の変化率計算
 - `src/clarity-periods.mjs`: 全期間・1ヶ月・1週間の履歴抽出
 - `src/clarity-chart.mjs`: JSON用Unicode確率チャート

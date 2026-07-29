@@ -262,15 +262,6 @@ test("Slack payload uses the QuickChart image and keeps text fallback", () => {
     { label: "Last 1 week", textChart, imageUrl, changeMetrics },
   ];
   const payload = createClaritySlackPayload(snapshot, charts);
-  const payloadWithStatus = createClaritySlackPayload(snapshot, charts, {
-    legislationStatus: {
-      latestActionDate: "2026-06-01",
-      sourceUrl:
-        "https://www.congress.gov/bill/119th-congress/house-bill/3633/actions",
-      summaryJa:
-        "上院の立法カレンダー（General Orders）に掲載。Calendar No. 423。",
-    },
-  });
   const fallback = createClaritySlackPayload(
     snapshot,
     charts.map((chart) => ({ ...chart, imageUrl: null })),
@@ -297,9 +288,6 @@ test("Slack payload uses the QuickChart image and keeps text fallback", () => {
   );
   assert.equal(payload.blocks[5].image_url, imageUrl);
   assert.match(fallback.blocks[5].text.text, /\*All history\*/);
-  assert.equal(payloadWithStatus.blocks.length, payload.blocks.length + 1);
-  assert.match(payloadWithStatus.blocks[2].text.text, /ON CALENDAR/);
-  assert.match(payloadWithStatus.blocks[2].text.text, /Calendar No\. 423/);
   assert.ok(Math.abs(calculateChange(snapshot.history, 86_400) + 0.075) < 1e-12);
 });
 

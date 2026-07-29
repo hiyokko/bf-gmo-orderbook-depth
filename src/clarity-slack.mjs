@@ -1,8 +1,6 @@
 import { calculateChangeMetrics } from "./clarity-metrics.mjs";
 
-export function createClaritySlackPayload(snapshot, charts, {
-  legislationStatus = null,
-} = {}) {
+export function createClaritySlackPayload(snapshot, charts) {
   const currentPercent = snapshot.yesProbability * 100;
   const change24h = calculateChangeMetrics(
     snapshot.history,
@@ -33,9 +31,6 @@ export function createClaritySlackPayload(snapshot, charts, {
           text: `<${snapshot.sourceUrl}|${escapeSlack(snapshot.title)}>`,
         },
       },
-      ...(legislationStatus
-        ? [createLegislationBlock(legislationStatus)]
-        : []),
       {
         type: "section",
         fields: [
@@ -82,23 +77,6 @@ export function createClaritySlackPayload(snapshot, charts, {
         }],
       },
     ],
-  };
-}
-
-function createLegislationBlock(status) {
-  return {
-    type: "section",
-    text: {
-      type: "mrkdwn",
-      text: [
-        "*Legislative status — official*",
-        "`House ✓`  →  `Senate ● ON CALENDAR`  →  `Later stages ○`",
-        `*Current:* ${escapeSlack(status.summaryJa)}`,
-        `*Latest action:* \`${status.latestActionDate}\`  ·  <${
-          status.sourceUrl
-        }|GovInfo / Congress.gov>`,
-      ].join("\n"),
-    },
   };
 }
 

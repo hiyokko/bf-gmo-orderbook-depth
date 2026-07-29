@@ -64,14 +64,6 @@ export const CLARITY_QUICKCHART = Object.freeze({
   maxUrlLength: 2_000,
 });
 
-export const CLARITY_LEGISLATION = Object.freeze({
-  billStatusUrl:
-    "https://www.govinfo.gov/bulkdata/BILLSTATUS/119/hr/BILLSTATUS-119hr3633.xml",
-  sourceUrl:
-    "https://www.congress.gov/bill/119th-congress/house-bill/3633/actions",
-  timeoutMs: 15_000,
-});
-
 export const SPREAD_MARKETS = Object.freeze({
   spot: Object.freeze([
     Object.freeze({ id: "sbivc", label: "SBI VC" }),

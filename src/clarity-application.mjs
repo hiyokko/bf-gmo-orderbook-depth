@@ -1,7 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createClarityTextChart } from "./clarity-chart.mjs";
-import { fetchClarityLegislationStatus } from "./clarity-legislation.mjs";
 import {
   createClarityQuickChartUrl,
   verifyQuickChartImage,
@@ -19,14 +18,10 @@ export async function runClarityReport({
   fetchImpl = globalThis.fetch,
   fetchedAt = new Date(),
   fetchMarketImpl = fetchClarityMarket,
-  fetchLegislationImpl = fetchClarityLegislationStatus,
 } = {}) {
   if (!outputPath) throw new Error("Output path is required");
 
-  const [snapshot, legislation] = await Promise.all([
-    fetchMarketImpl({ fetchImpl, fetchedAt }),
-    fetchOptionalLegislation({ fetchImpl, fetchLegislationImpl }),
-  ]);
+  const snapshot = await fetchMarketImpl({ fetchImpl, fetchedAt });
   const charts = createClarityPeriodSnapshots(snapshot).map((period) => (
     createChart(period)
   ));
@@ -35,9 +30,7 @@ export async function runClarityReport({
       (chart) => verifyChart(chart, { fetchImpl }),
     ));
   }
-  const slackPayload = createClaritySlackPayload(snapshot, charts, {
-    legislationStatus: legislation.status,
-  });
+  const slackPayload = createClaritySlackPayload(snapshot, charts);
   const slack = {
     requested: !dryRun,
     posted: false,
@@ -66,7 +59,6 @@ export async function runClarityReport({
     textChart: charts[0].textChart,
     quickChart: toLegacyQuickChart(charts[0]),
     charts: charts.map(toReportChart),
-    legislation,
     slack,
   };
   await saveJson(report, outputPath);
@@ -139,21 +131,4 @@ function toLegacyQuickChart(chart) {
     included: chart.included,
     error: chart.error,
   };
-}
-
-async function fetchOptionalLegislation({
-  fetchImpl,
-  fetchLegislationImpl,
-}) {
-  try {
-    return {
-      status: await fetchLegislationImpl({ fetchImpl }),
-      error: null,
-    };
-  } catch (error) {
-    return {
-      status: null,
-      error: toError(error).message,
-    };
-  }
 }

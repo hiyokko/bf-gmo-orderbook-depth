@@ -25,18 +25,6 @@ const SNAPSHOT = {
   ],
 };
 
-const LEGISLATION_STATUS = {
-  stage: "senate_calendar",
-  latestActionDate: "2026-06-01",
-  latestActionText:
-    "Placed on Senate Legislative Calendar under General Orders. Calendar No. 423.",
-  calendarNumber: "423",
-  sourceUrl:
-    "https://www.congress.gov/bill/119th-congress/house-bill/3633/actions",
-  summaryJa:
-    "上院の立法カレンダー（General Orders）に掲載。Calendar No. 423。",
-};
-
 test("CLARITY application saves a QuickChart preview without posting in dry-run", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "clarity-report-"));
   const outputPath = path.join(directory, "latest.json");
@@ -46,7 +34,6 @@ test("CLARITY application saves a QuickChart preview without posting in dry-run"
       outputPath,
       fetchedAt: new Date("2026-07-29T12:00:00.000Z"),
       fetchMarketImpl: async () => SNAPSHOT,
-      fetchLegislationImpl: async () => LEGISLATION_STATUS,
       fetchImpl: async () => {
         throw new Error("Slack must not be called");
       },
@@ -63,9 +50,8 @@ test("CLARITY application saves a QuickChart preview without posting in dry-run"
       ["all", "month", "week"],
     );
     assert.ok(result.report.charts.every(({ included }) => included));
-    assert.equal(result.report.legislation.status.stage, "senate_calendar");
     assert.equal(result.slackPayload.blocks[2].type, "section");
-    assert.match(result.slackPayload.blocks[2].text.text, /ON CALENDAR/);
+    assert.match(result.slackPayload.blocks[2].fields[0].text, /29\.5%/);
     assert.match(saved.textChart, /^100% ┤/);
     assert.match(saved.textChart, /  0% └/);
   } finally {
@@ -82,7 +68,6 @@ test("CLARITY application posts Block Kit payload through the existing webhook",
       outputPath,
       webhookUrl: "https://hooks.slack.com/services/T111/B222/secret",
       fetchMarketImpl: async () => SNAPSHOT,
-      fetchLegislationImpl: async () => null,
       fetchImpl: async (url, options) => {
         if (String(url).startsWith("https://quickchart.io/")) {
           return {
@@ -125,7 +110,6 @@ test("CLARITY application falls back to text when QuickChart is unavailable", as
       outputPath,
       webhookUrl: "https://hooks.slack.com/services/T111/B222/secret",
       fetchMarketImpl: async () => SNAPSHOT,
-      fetchLegislationImpl: async () => null,
       fetchImpl: async (url, options) => {
         if (String(url).startsWith("https://quickchart.io/")) {
           return {
