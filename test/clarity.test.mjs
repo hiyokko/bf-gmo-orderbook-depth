@@ -153,12 +153,19 @@ test("QuickChart URL contains a compact vertical chart without credentials", () 
   const chart = JSON.parse(parsedUrl.searchParams.get("c"));
 
   assert.equal(parsedUrl.origin, "https://quickchart.io");
-  assert.ok(imageUrl.length < 2_000);
-  assert.equal(parsedUrl.searchParams.get("devicePixelRatio"), "1");
+  assert.ok(imageUrl.length < 2_400);
+  assert.equal(parsedUrl.searchParams.get("w"), "1800");
+  assert.equal(parsedUrl.searchParams.get("h"), "920");
+  assert.equal(parsedUrl.searchParams.get("devicePixelRatio"), "2");
   assert.equal(chart.type, "line");
   assert.equal(chart.options.scales.y.min, 0);
   assert.equal(chart.options.scales.y.max, 100);
+  assert.equal(chart.options.plugins.title.font.size, 28);
+  assert.equal(chart.options.plugins.subtitle.font.size, 20);
+  assert.equal(chart.options.scales.x.ticks.font.size, 18);
+  assert.equal(chart.options.scales.y.ticks.font.size, 18);
   assert.deepEqual(chart.data.datasets[0].data, [42, 37, 29.5]);
+  assert.equal(chart.data.datasets[0].borderWidth, 4);
   assert.equal(chart.data.datasets[0].tension, 0);
   assert.doesNotMatch(imageUrl, /key|token|secret/i);
 });
@@ -194,7 +201,7 @@ test("QuickChart renders up to 60 points for detailed shorter periods", () => {
   const chart = JSON.parse(new URL(imageUrl).searchParams.get("c"));
 
   assert.equal(chart.data.datasets[0].data.length, 60);
-  assert.ok(imageUrl.length < 2_000);
+  assert.ok(imageUrl.length < 2_400);
 });
 
 test("CLARITY periods select all history, trailing month, and trailing week", () => {

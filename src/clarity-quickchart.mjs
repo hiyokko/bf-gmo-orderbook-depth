@@ -36,7 +36,7 @@ export function createClarityQuickChartUrl(snapshot, {
         data: values,
         borderColor: "#2563eb",
         backgroundColor: "#dbeafe",
-        borderWidth: 3,
+        borderWidth: 4,
         pointRadius: 0,
         fill: true,
         tension: 0,
@@ -48,10 +48,12 @@ export function createClarityQuickChartUrl(snapshot, {
         title: {
           display: true,
           text: `CLARITY Act — ${periodLabel}`,
+          font: { size: 28, weight: "bold" },
         },
         subtitle: {
           display: true,
           text: `YES probability | Current ${currentPercent}%`,
+          font: { size: 20 },
         },
       },
       scales: {
@@ -60,6 +62,7 @@ export function createClarityQuickChartUrl(snapshot, {
           ticks: {
             autoSkip: false,
             maxRotation: 0,
+            font: { size: 18 },
           },
         },
         y: {
@@ -67,10 +70,12 @@ export function createClarityQuickChartUrl(snapshot, {
           max: 100,
           ticks: {
             stepSize: 20,
+            font: { size: 18 },
           },
           title: {
             display: true,
             text: "Probability (%)",
+            font: { size: 18 },
           },
         },
       },

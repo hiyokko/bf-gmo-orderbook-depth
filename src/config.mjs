@@ -58,10 +58,10 @@ export const CLARITY_HISTORY_SERIES = Object.freeze([
 export const CLARITY_QUICKCHART = Object.freeze({
   endpoint: "https://quickchart.io/chart",
   historyPoints: 60,
-  width: 900,
-  height: 460,
-  devicePixelRatio: 1,
-  maxUrlLength: 2_000,
+  width: 1_800,
+  height: 920,
+  devicePixelRatio: 2,
+  maxUrlLength: 2_400,
 });
 
 export const SPREAD_MARKETS = Object.freeze({
