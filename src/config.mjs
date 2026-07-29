@@ -23,15 +23,41 @@ export const CLARITY_MARKET = Object.freeze({
   pageUrl: "https://polymarket.com/ja/event/clarity-act-signed-into-law-in-2026",
   gammaUrl: "https://gamma-api.polymarket.com/events/slug/clarity-act-signed-into-law-in-2026",
   historyUrl: "https://clob.polymarket.com/prices-history",
-  historyInterval: "max",
-  historyFidelityMinutes: 1440,
+  historyTimeoutMs: 30_000,
   chartWidth: 36,
   chartHeight: 8,
 });
 
+export const CLARITY_HISTORY_SERIES = Object.freeze([
+  Object.freeze({
+    id: "all",
+    label: "All history",
+    interval: "max",
+    fidelityMinutes: 1_440,
+    chartPoints: 60,
+    durationSeconds: null,
+  }),
+  Object.freeze({
+    id: "month",
+    label: "Last 1 month",
+    interval: "1m",
+    fidelityMinutes: 360,
+    chartPoints: 60,
+    durationSeconds: 30 * 24 * 60 * 60,
+  }),
+  Object.freeze({
+    id: "week",
+    label: "Last 1 week",
+    interval: "1w",
+    fidelityMinutes: 60,
+    chartPoints: 60,
+    durationSeconds: 7 * 24 * 60 * 60,
+  }),
+]);
+
 export const CLARITY_QUICKCHART = Object.freeze({
   endpoint: "https://quickchart.io/chart",
-  historyPoints: 36,
+  historyPoints: 60,
   width: 900,
   height: 460,
   devicePixelRatio: 2,

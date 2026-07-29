@@ -88,6 +88,7 @@ function createChart(period) {
   };
   try {
     chart.imageUrl = createClarityQuickChartUrl(period.snapshot, {
+      maxPoints: period.chartPoints,
       periodLabel: period.label,
     });
     chart.included = true;

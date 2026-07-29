@@ -1,4 +1,5 @@
 import {
+  CLARITY_HISTORY_SERIES,
   CLARITY_MARKET,
   RUNTIME_DEFAULTS,
 } from "./config.mjs";
@@ -7,6 +8,7 @@ export async function fetchClarityMarket({
   fetchImpl = globalThis.fetch,
   fetchedAt = new Date(),
   timeoutMs = RUNTIME_DEFAULTS.requestTimeoutMs,
+  historyTimeoutMs = CLARITY_MARKET.historyTimeoutMs,
 } = {}) {
   if (typeof fetchImpl !== "function") throw new Error("Fetch API is unavailable");
   if (!(fetchedAt instanceof Date) || Number.isNaN(fetchedAt.getTime())) {
@@ -19,28 +21,59 @@ export async function fetchClarityMarket({
     label: "Polymarket event",
   });
   const market = parseClarityEvent(event);
-  const historyUrl = new URL(CLARITY_MARKET.historyUrl);
-  historyUrl.searchParams.set("market", market.yesTokenId);
-  historyUrl.searchParams.set("interval", CLARITY_MARKET.historyInterval);
-  historyUrl.searchParams.set(
-    "fidelity",
-    String(CLARITY_MARKET.historyFidelityMinutes),
+  const historyResults = await Promise.all(
+    CLARITY_HISTORY_SERIES.map(async (series) => {
+      try {
+        const historyUrl = createHistoryUrl(market.yesTokenId, series);
+        const historyBody = await requestJson(historyUrl, {
+          fetchImpl,
+          timeoutMs: historyTimeoutMs,
+          label: `Polymarket ${series.id} price history`,
+        });
+        return {
+          id: series.id,
+          history: parsePriceHistory(
+            historyBody,
+            fetchedAt,
+            market.yesProbability,
+          ),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          id: series.id,
+          history: null,
+          error: toError(error).message,
+        };
+      }
+    }),
   );
-  const historyBody = await requestJson(historyUrl, {
-    fetchImpl,
-    timeoutMs,
-    label: "Polymarket price history",
-  });
+  const allHistory = historyResults.find(({ id }) => id === "all");
+  if (!allHistory?.history) {
+    throw new Error(allHistory?.error || "Polymarket all price history failed");
+  }
+  const histories = Object.fromEntries(
+    historyResults
+      .filter(({ history }) => history)
+      .map(({ id, history }) => [id, history]),
+  );
+  const historyErrors = Object.fromEntries(
+    historyResults
+      .filter(({ error }) => error)
+      .map(({ id, error }) => [id, error]),
+  );
 
   return {
     ...market,
     sourceUrl: CLARITY_MARKET.pageUrl,
     fetchedAt: fetchedAt.toISOString(),
-    history: parsePriceHistory(
-      historyBody,
-      fetchedAt,
-      market.yesProbability,
+    history: histories.all,
+    periodHistories: Object.fromEntries(
+      ["month", "week"]
+        .filter((id) => histories[id])
+        .map((id) => [id, histories[id]]),
     ),
+    periodHistoryErrors: historyErrors,
   };
 }
 
@@ -122,13 +155,18 @@ async function requestJson(url, {
   timeoutMs,
   label,
 }) {
-  const response = await fetchImpl(String(url), {
-    headers: {
-      accept: "application/json",
-      "user-agent": RUNTIME_DEFAULTS.userAgent,
-    },
-    signal: AbortSignal.timeout(timeoutMs),
-  });
+  let response;
+  try {
+    response = await fetchImpl(String(url), {
+      headers: {
+        accept: "application/json",
+        "user-agent": RUNTIME_DEFAULTS.userAgent,
+      },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    throw new Error(`${label} failed: ${toError(error).message}`);
+  }
   if (!response.ok) {
     throw new Error(`${label} failed: HTTP ${response.status}`);
   }
@@ -153,4 +191,16 @@ function parseArrayField(value) {
 function finiteNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function createHistoryUrl(tokenId, series) {
+  const historyUrl = new URL(CLARITY_MARKET.historyUrl);
+  historyUrl.searchParams.set("market", tokenId);
+  historyUrl.searchParams.set("interval", series.interval);
+  historyUrl.searchParams.set("fidelity", String(series.fidelityMinutes));
+  return historyUrl;
+}
+
+function toError(error) {
+  return error instanceof Error ? error : new Error(String(error));
 }

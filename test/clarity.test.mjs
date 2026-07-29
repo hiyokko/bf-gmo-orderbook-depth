@@ -65,10 +65,60 @@ test("Polymarket fetch uses Gamma metadata and CLOB token history", async () => 
   });
 
   assert.match(urls[0], /gamma-api\.polymarket\.com/);
-  assert.match(urls[1], /market=123456789/);
-  assert.match(urls[1], /interval=max/);
+  const historyQueries = urls.slice(1).map((value) => {
+    const url = new URL(value);
+    return {
+      interval: url.searchParams.get("interval"),
+      fidelity: url.searchParams.get("fidelity"),
+    };
+  });
+  assert.deepEqual(historyQueries, [
+    { interval: "max", fidelity: "1440" },
+    { interval: "1m", fidelity: "360" },
+    { interval: "1w", fidelity: "60" },
+  ]);
+  assert.ok(urls.slice(1).every((url) => /market=123456789/.test(url)));
   assert.equal(result.history.at(-1).probability, 0.295);
   assert.equal(result.history.at(-1).timestamp, 1_785_326_400);
+  assert.equal(result.periodHistories.month.length, 2);
+  assert.equal(result.periodHistories.week.length, 2);
+  assert.deepEqual(result.periodHistoryErrors, {});
+});
+
+test("Polymarket fetch keeps all history when a detailed period fails", async () => {
+  const fetchedAt = new Date("2026-07-29T12:00:00.000Z");
+  const result = await fetchClarityMarket({
+    fetchedAt,
+    fetchImpl: async (url) => {
+      const value = String(url);
+      if (value.includes("gamma-api")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => EVENT,
+        };
+      }
+      const interval = new URL(value).searchParams.get("interval");
+      if (interval === "1m") {
+        return {
+          ok: false,
+          status: 503,
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          history: [{ t: 1_785_240_000, p: 0.37 }],
+        }),
+      };
+    },
+  });
+
+  assert.equal(result.history.length, 2);
+  assert.equal(result.periodHistories.month, undefined);
+  assert.equal(result.periodHistories.week.length, 2);
+  assert.match(result.periodHistoryErrors.month, /HTTP 503/);
 });
 
 test("price history is normalized, sorted, and ends at current probability", () => {
@@ -127,6 +177,24 @@ test("QuickChart suppresses a duplicate current-day axis label", () => {
   assert.deepEqual(chart.data.labels, ["7/28", "", "7/29"]);
 });
 
+test("QuickChart renders up to 60 points for detailed shorter periods", () => {
+  const history = Array.from({ length: 140 }, (_, index) => ({
+    timestamp: 1_784_000_000 + index * 3_600,
+    probability: 0.3 + index % 20 / 100,
+  }));
+  const imageUrl = createClarityQuickChartUrl({
+    ...parseClarityEvent(EVENT),
+    history,
+  }, {
+    maxPoints: 60,
+    periodLabel: "Last 1 week",
+  });
+  const chart = JSON.parse(new URL(imageUrl).searchParams.get("chart"));
+
+  assert.equal(chart.data.datasets[0].data.length, 60);
+  assert.ok(imageUrl.length < 3_000);
+});
+
 test("CLARITY periods select all history, trailing month, and trailing week", () => {
   const day = 86_400;
   const latest = 5_000_000;
@@ -144,6 +212,29 @@ test("CLARITY periods select all history, trailing month, and trailing week", ()
   assert.deepEqual(
     periods.map(({ snapshot }) => snapshot.history.length),
     [5, 4, 2],
+  );
+  assert.deepEqual(periods.map(({ chartPoints }) => chartPoints), [60, 60, 60]);
+});
+
+test("CLARITY periods prefer separately fetched detailed histories", () => {
+  const history = [
+    { timestamp: 1, probability: 0.5 },
+    { timestamp: 2, probability: 0.4 },
+  ];
+  const periods = createClarityPeriodSnapshots({
+    history,
+    periodHistories: {
+      month: [...history, { timestamp: 3, probability: 0.3 }],
+      week: [...history, { timestamp: 3, probability: 0.3 }, {
+        timestamp: 4,
+        probability: 0.2,
+      }],
+    },
+  });
+
+  assert.deepEqual(
+    periods.map(({ snapshot }) => snapshot.history.length),
+    [2, 3, 4],
   );
 });
 

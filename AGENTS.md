@@ -72,6 +72,10 @@ These instructions apply to the repository root and all descendants.
   non-expiring URLs under Slack's 3,000-character limit. Do not use a short URL
   or API key. Fall back per period to the JSON-only Slack Unicode area chart
   with a vertical probability axis when QuickChart fails.
+- Fetch all-history at daily fidelity, trailing-30-day history at six-hour
+  fidelity, and trailing-7-day history at hourly fidelity. Render up to 60
+  points for each period. If a shorter-period history request fails, fall back
+  to slicing the all-history series instead of failing the report.
 - Outside the CLARITY charts, show all-history, trailing-30-day,
   trailing-7-day, and 24-hour relative change rates with probability-point
   changes alongside them.

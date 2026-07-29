@@ -1,22 +1,6 @@
-const DAY_SECONDS = 24 * 60 * 60;
+import { CLARITY_HISTORY_SERIES } from "./config.mjs";
 
-export const CLARITY_CHART_PERIODS = Object.freeze([
-  Object.freeze({
-    id: "all",
-    label: "All history",
-    durationSeconds: null,
-  }),
-  Object.freeze({
-    id: "month",
-    label: "Last 1 month",
-    durationSeconds: 30 * DAY_SECONDS,
-  }),
-  Object.freeze({
-    id: "week",
-    label: "Last 1 week",
-    durationSeconds: 7 * DAY_SECONDS,
-  }),
-]);
+export const CLARITY_CHART_PERIODS = CLARITY_HISTORY_SERIES;
 
 export function createClarityPeriodSnapshots(snapshot) {
   const history = Array.isArray(snapshot?.history) ? snapshot.history : [];
@@ -26,11 +10,11 @@ export function createClarityPeriodSnapshots(snapshot) {
 
   const latestTimestamp = history.at(-1).timestamp;
   return CLARITY_CHART_PERIODS.map((period) => {
-    const selected = period.durationSeconds === null
-      ? [...history]
-      : history.filter(
-        (point) => point.timestamp >= latestTimestamp - period.durationSeconds,
-      );
+    const detailedHistory = snapshot.periodHistories?.[period.id];
+    const selected = Array.isArray(detailedHistory)
+      && detailedHistory.length >= 2
+      ? [...detailedHistory]
+      : selectFromAllHistory(history, period, latestTimestamp);
 
     return {
       ...period,
@@ -40,4 +24,11 @@ export function createClarityPeriodSnapshots(snapshot) {
       },
     };
   });
+}
+
+function selectFromAllHistory(history, period, latestTimestamp) {
+  if (period.durationSeconds === null) return [...history];
+  return history.filter(
+    (point) => point.timestamp >= latestTimestamp - period.durationSeconds,
+  );
 }
