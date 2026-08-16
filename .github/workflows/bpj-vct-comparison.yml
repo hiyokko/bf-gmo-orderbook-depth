@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   bpj-vct-comparison:
-    runs-on: ubuntu-24.04
+    runs-on: macos-15
     timeout-minutes: 10
     steps:
       - name: Check out repository
