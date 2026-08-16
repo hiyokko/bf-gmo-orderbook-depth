@@ -11,9 +11,7 @@
     "spread": "node scripts/run-spread-comparison.mjs",
     "spread:dry-run": "node scripts/run-spread-comparison.mjs --dry-run",
     "clarity": "node scripts/run-clarity-act.mjs",
-    "clarity:dry-run": "node scripts/run-clarity-act.mjs --dry-run",
-    "bpj-vct": "node scripts/run-bpj-vct-comparison.mjs",
-    "bpj-vct:dry-run": "node scripts/run-bpj-vct-comparison.mjs --dry-run"
+    "clarity:dry-run": "node scripts/run-clarity-act.mjs --dry-run"
   },
   "engines": {
     "node": ">=24"

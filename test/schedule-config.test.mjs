@@ -88,24 +88,6 @@ test("spread comparison workflow uses the same JST slots and protects the Slack 
   assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
 });
 
-test("BPJ/VCT diagnostic workflow is manual-only and protects the Slack secret", async () => {
-  const workflow = await readFile(
-    new URL("../.github/workflows/bpj-vct-comparison.yml", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(workflow, /workflow_dispatch:/);
-  assert.doesNotMatch(workflow, /schedule:/);
-  assert.match(workflow, /permissions:\n  actions: read\n  contents: read/);
-  assert.match(workflow, /SLACK_WEBHOOK_URL: \$\{\{ secrets\.SLACK_WEBHOOK_URL \}\}/);
-  assert.doesNotMatch(workflow, /pull_request:|push:/);
-  assert.match(workflow, /npm run bpj-vct:dry-run/);
-
-  const actionReferences = [...workflow.matchAll(/uses: [^@]+@([a-f0-9]+)/g)];
-  assert.ok(actionReferences.length >= 2);
-  assert.ok(actionReferences.every(([, sha]) => sha.length === 40));
-});
-
 test("legacy watchdog workflows are removed", async () => {
   for (const file of [
     "../.github/workflows/orderbook-depth-watchdog.yml",
