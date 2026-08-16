@@ -86,7 +86,18 @@ These instructions apply to the repository root and all descendants.
 - Keep calculation, external I/O, orchestration, and CLI entry points in separate modules under `src/` and `scripts/`.
 - Normalize and sort each exchange side once before calculating all configured target quantities.
 - Run `npm test`, `npm run dry-run`, `npm run spread:dry-run`, and
-  `npm run clarity:dry-run` after code or workflow changes.
+  `npm run clarity:dry-run`, and `npm run bpj-vct:dry-run` after code or
+  workflow changes.
+
+## BPJ / VCT price divergence
+
+- Reproduce the workbook's `乖離率一覧` calculation from live dealer quotes;
+  do not commit the source `.xlsm` file.
+- Use the workbook's 20 symbols and preserve its row order.
+- Calculate sell-side divergence as `(VCT bid - BPJ bid) / BPJ bid` and
+  buy-side divergence as `(VCT ask - BPJ ask) / BPJ ask`.
+- Display both divergence percentages with three decimal places.
+- Treat BITPOINT `LNKJPY` as `LINKJPY`.
 
 ## Public-repository security
 
