@@ -13,6 +13,10 @@
   - レバレッジ: SBI VC / bF / GMO
 - Polymarketの「CLARITY Actが2026年に署名・成立する」YES確率と推移
 
+これらとは別に、Excelマクロから移植したBITPOINT（BPJ）/ SBI VC
+（VCT）の販売所価格乖離チェックを収録しています。詳細は
+「BPJ / VCT価格乖離チェック」を参照してください。
+
 ## 実行スケジュール
 
 GitHub Actionsが次の時刻に自動実行します。
@@ -36,8 +40,8 @@ Slack上の順番は必ず
 
 `.github/workflows/report-watchdog.yml` が毎時 `07 / 17 / 27 / 37 / 47 / 57` 分に直近の定時枠を確認します。定時から20分以上経過しても、その枠の正常完了または実行中の記録がなければ、3種類のレポートのうち未完了のものだけをバックアップ実行します。6時間を超えた古い枠は追いかけません。
 
-2種類のレポートは個別に判定・再実行されるため、片方の確認やdispatchが
-失敗しても、もう片方の復旧処理は継続します。
+3種類のレポートは個別に判定・再実行されるため、1つの確認やdispatchが
+失敗しても、残りの復旧処理は継続します。
 
 正常完了の判定にはGitHub Actionsの実行履歴を利用するため、外部DBや追加Secretは不要です。元ワークフローとバックアップは同じ同時実行グループで直列化され、投稿直前にも同じ枠の成功記録を確認するため、遅延した定時実行との二重投稿を防ぎます。
 
@@ -132,6 +136,29 @@ Secretの値は公開リポジトリ、Git履歴、Actionsログには表示さ�
 
 Pull Requestやpushイベントからは起動しないため、外部コントリビューターのコードでSecretを使用することはありません。
 
+### BPJ / VCT価格乖離チェック
+
+`BPJ_VCT_価格乖離チェックシート_自動更新版_ver.2.xlsm` の
+`乖離率一覧` をNode.jsへ移植しています。元のExcelファイルは公開
+リポジトリへ収録していません。
+
+- 対象: Excelと同じ20銘柄・同じ並び順
+- 売: `(VCT bid - BPJ bid) / BPJ bid`
+- 買: `(VCT ask - BPJ ask) / BPJ ask`
+- 表示: 小数点以下3桁
+- `LNKJPY` は `LINKJPY` へ正規化
+
+ローカルではBITPOINT 29銘柄、SBI VC 33銘柄を取得し、Slack投稿まで
+動作確認済みです。一方、2026年8月16日の実行テストではGitHubホスト
+ランナーからBITPOINTの価格JSONがUbuntu・macOSとも `HTTP 403` で
+拒否されました。このため `.github/workflows/bpj-vct-comparison.yml` は
+再テスト用の手動ワークフローとし、定時実行とwatchdogには入れていません。
+
+完全自動化には、BITPOINTへ接続できる日本側ネットワークのself-hosted
+runner、またはアクセスを中継する管理下のサービスが必要です。接続経路を
+用意した後は、既存と同じJST 01:00 / 09:00 / 17:00のscheduleと統合
+watchdogを追加できます。
+
 ## ローカル実行
 
 Node.js 24以降が必要です。
@@ -149,6 +176,7 @@ chmod 600 .env
 npm run dry-run
 npm run spread:dry-run
 npm run clarity:dry-run
+npm run bpj-vct:dry-run
 ```
 
 Slackへ投稿:
@@ -157,6 +185,7 @@ Slackへ投稿:
 npm start
 npm run spread
 npm run clarity
+npm run bpj-vct
 ```
 
 テスト:
@@ -167,7 +196,8 @@ npm test
 
 最新結果は板Depthが `output/latest.json`、スプレッド比較が
 `output/spread-latest.json`、CLARITY Actが
-`output/clarity-latest.json` に保存されます。このディレクトリと `.env`
+`output/clarity-latest.json`、BPJ / VCT価格乖離が
+`output/bpj-vct-latest.json` に保存されます。このディレクトリと `.env`
 はGitから除外されます。
 
 ## コード構成
@@ -194,6 +224,10 @@ npm test
 - `src/spread-comparison.mjs`: スプレッド計算と比較表データ
 - `src/spread-slack.mjs`: 4種類のSlack比較表
 - `src/spread-application.mjs`: スプレッド取得からレポート保存までの実行制御
+- `src/bpj-vct-sources.mjs`: BPJ / VCT販売所価格の取得・変換
+- `src/bpj-vct-comparison.mjs`: Excelと同じ20銘柄・乖離率計算
+- `src/bpj-vct-slack.mjs`: BPJ / VCTのSlack比較表
+- `src/bpj-vct-application.mjs`: BPJ / VCT取得から保存・投稿までの実行制御
 - `scripts/`: 通常実行、重複防止、watchdogの薄いエントリーポイント
 - `test/`: 計算、I/O境界、watchdog、Workflow設定のテスト
 
